@@ -79,46 +79,6 @@
                     <input type="tel" id="groupPhone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border" placeholder="(00) 00000-0000">
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label for="groupCity" class="block text-sm font-medium text-gray-700">Cidade</label>
-                        <input type="text" id="groupCity" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
-                    </div>
-                    <div>
-                        <label for="groupState" class="block text-sm font-medium text-gray-700">Estado</label>
-                        <select id="groupState" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
-                            <option value="">Selecione o estado</option>
-                            <option value="AC">Acre</option>
-                            <option value="AL">Alagoas</option>
-                            <option value="AP">Amapá</option>
-                            <option value="AM">Amazonas</option>
-                            <option value="BA">Bahia</option>
-                            <option value="CE">Ceará</option>
-                            <option value="DF">Distrito Federal</option>
-                            <option value="ES">Espírito Santo</option>
-                            <option value="GO">Goiás</option>
-                            <option value="MA">Maranhão</option>
-                            <option value="MT">Mato Grosso</option>
-                            <option value="MS">Mato Grosso do Sul</option>
-                            <option value="MG">Minas Gerais</option>
-                            <option value="PA">Pará</option>
-                            <option value="PB">Paraíba</option>
-                            <option value="PR">Paraná</option>
-                            <option value="PE">Pernambuco</option>
-                            <option value="PI">Piauí</option>
-                            <option value="RJ">Rio de Janeiro</option>
-                            <option value="RN">Rio Grande do Norte</option>
-                            <option value="RS">Rio Grande do Sul</option>
-                            <option value="RO">Rondônia</option>
-                            <option value="RR">Roraima</option>
-                            <option value="SC">Santa Catarina</option>
-                            <option value="SP">São Paulo</option>
-                            <option value="SE">Sergipe</option>
-                            <option value="TO">Tocantins</option>
-                        </select>
-                    </div>
-                </div>
-
                 <!-- NOVO CAMPO: Possui Sede Própria (Toggle) -->
                 <div class="mb-4">
                     <label for="hasOwnHeadquarters" class="block text-sm font-medium text-gray-700">O grupo/empreendimento possui sede própria?</label>
@@ -857,8 +817,6 @@
         const groupName = getVal('groupName') || 'Sem Nome';
         const groupContact = getVal('groupContact') || 'N/A';
         const groupPhone = getVal('groupPhone') || 'N/A';
-        const groupCity = getVal('groupCity') || 'N/A';
-        const groupState = getValFromSelect('groupState') || 'N/A';
         const groupRepresentativeName = getVal('groupRepresentativeName') || 'N/A';
         
         // Novos campos da Seção 1
@@ -882,8 +840,6 @@
             email: groupContact,
             phone: groupPhone,
             has_headquarters: hasOwnHeadquarters === 'Sim', // Converte "Sim"/"Não" para boolean
-            city: groupCity,
-            state: groupState,
         };
 
         let groupRecordId = null;
