@@ -1,4 +1,22 @@
 /**
+ * Converte boolean para "Sim" ou "Não"
+ * @param {boolean} value - O valor booleano
+ * @returns {string} "Sim" para true, "Não" para false
+ */
+export function booleanToYesNo(value) {
+    return value ? "Sim" : "Não";
+}
+
+/**
+ * Converte "Sim" ou "Não" para boolean
+ * @param {string} value - "Sim" ou "Não"
+ * @returns {boolean} true para "Sim", false para "Não"
+ */
+export function yesNoToBoolean(value) {
+    return value === "Sim";
+}
+
+/**
  * Formats a CEP string by adding hyphen
  * @param {string} value - The CEP to format
  * @returns {string} Formatted CEP

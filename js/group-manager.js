@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js';
-import { showAlert } from './utils.js';
+import { showAlert, booleanToYesNo, yesNoToBoolean } from './utils.js';
 
 export class GroupManager {
     constructor() {
@@ -26,13 +26,19 @@ export class GroupManager {
                 .maybeSingle();
 
             if (group) {
+                // Converte boolean para "Sim"/"Não" ao carregar
+                const formattedGroup = {
+                    ...group,
+                    has_headquarters: booleanToYesNo(group.has_headquarters)
+                };
+
                 const { data: members } = await supabase
                     .from('members')
                     .select('*')
                     .eq('group_id', group.id);
 
                 this.members = members || [];
-                return { group, members: this.members };
+                return { group: formattedGroup, members: this.members };
             }
             return null;
         } catch (error) {
@@ -44,18 +50,25 @@ export class GroupManager {
 
     async saveGroup(groupData) {
         try {
+            // Converte "Sim"/"Não" para boolean antes de salvar
+            const dataToSave = {
+                ...groupData,
+                has_headquarters: yesNoToBoolean(groupData.has_headquarters),
+                user_id: this.user.id,
+                updated_at: new Date().toISOString()
+            };
+
             const { data: group, error } = await supabase
                 .from('groups')
-                .upsert({
-                    ...groupData,
-                    user_id: this.user.id,
-                    updated_at: new Date().toISOString()
-                })
+                .upsert(dataToSave)
                 .select()
                 .single();
 
             if (error) throw error;
-            return group;
+            return {
+                ...group,
+                has_headquarters: booleanToYesNo(group.has_headquarters)
+            };
         } catch (error) {
             console.error('Error saving group:', error);
             throw error;
