@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualização - COMESOL</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
+    .card { box-shadow: 0 0 15px rgba(0, 0, 0, 0.08); }
+    .btn-primary { background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; }
+    .btn-primary:hover { background-color: #1d4ed8; }
+    .btn-secondary { background-color: #f3f4f6; padding: 0.5rem 1rem; border-radius: 0.5rem; }
+    .btn-secondary:hover { background-color: #e5e7eb; }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen p-6 flex justify-center">
+    <div class="card bg-white rounded-xl p-8 w-full max-w-5xl">
+      <header class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Dados do Grupo</h1>
+        <div class="space-x-2">
+          <button id="editButton" class="btn-primary">Editar</button>
+          <button id="logoutButton" class="btn-secondary">Sair</button>
+        </div>
+      </header>
+
+      <section id="group-info" class="mb-8"></section>
+
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">Membros</h2>
+      <div id="members-list" class="space-y-4"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let groupId = null;
+
+    async function loadData() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Sessão expirada. Faça login novamente.');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      const { data: group } = await supabase
+        .from('groups')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!group) {
+        alert('Nenhum grupo cadastrado.');
+        window.location.href = 'cadastro.html';
+        return;
+      }
+
+      groupId = group.id;
+
+      document.getElementById('group-info').innerHTML = `
+        <div class="p-4 border rounded bg-gray-50">
+          <p><strong>Nome:</strong> ${group.group_name || ''}</p>
+          <p><strong>Representante:</strong> ${group.representative || ''}</p>
+          <p><strong>Email:</strong> ${group.email || ''}</p>
+        </div>
+      `;
+
+      const { data: members } = await supabase
+        .from('members')
+        .select('*')
+        .eq('group_id', group.id);
+
+      const membersList = document.getElementById('members-list');
+      membersList.innerHTML = '';
+      if (members && members.length > 0) {
+        members.forEach(m => {
+          const card = document.createElement('div');
+          card.className = 'p-4 border rounded bg-white';
+          card.innerHTML = `
+            <p><strong>Nome:</strong> ${m.name}</p>
+            <p><strong>CPF:</strong> ${m.cpf}</p>
+            <p><strong>Email:</strong> ${m.email}</p>
+            <p><strong>Telefone:</strong> ${m.phone}</p>
+            <p><strong>Gênero:</strong> ${m.gender}</p>
+            <p><strong>Etnia:</strong> ${m.ethnicity}</p>
+            <p><strong>Escolaridade:</strong> ${m.education}</p>
+            <p><strong>Função no Grupo:</strong> ${m.role}</p>
+            <p><strong>Produtos:</strong> ${m.products}</p>
+            <p><strong>Matérias-primas:</strong> ${m.rawMaterials}</p>
+            <p><strong>Renda Média:</strong> ${m.monthlyIncome}</p>
+          `;
+          membersList.appendChild(card);
+        });
+      } else {
+        membersList.innerHTML = '<p class="text-gray-500">Nenhum membro cadastrado.</p>';
+      }
+
+      document.getElementById('editButton').onclick = () => {
+        window.location.href = `cadastro.html?editId=${groupId}`;
+      };
+    }
+
+    document.getElementById('logoutButton').onclick = async () => {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+    };
+
+    loadData();
+  </script>
+</body>
+</html>

@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro Anual - COMESOL</title>
+    <!-- Carregamento do Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc; /* light gray background */
+        }
+        .card {
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05); /* Soft shadow */
+        }
+        /* Estilos personalizados para o botão principal */
+        .btn-primary {
+            background-color: #48bb78; /* green-500 */
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #38a169; /* green-600; */
+            transform: translateY(-1px);
+        }
+        .btn-primary:disabled {
+            background-color: #a0aec0; /* gray-400 */
+            cursor: not-allowed;
+        }
+        /* Feedback visual para padrão incorreto (só aparece se o campo NÃO estiver vazio) */
+        input:not(:placeholder-shown):not(:focus):invalid {
+            border-color: #f56565 !important; /* red-500 */
+            box-shadow: 0 0 0 1px #f56565 !important;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container" class="min-h-screen p-4 sm:p-8 flex items-start justify-center">
+    <div class="w-full max-w-4xl bg-white rounded-xl card p-6 sm:p-10 my-8">
+        
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Cadastro Anual - COMESOL</h1>
+        <p class="text-sm text-gray-600 mb-6">Preencha as informações do grupo e, em seguida, adicione os dados de cada membro. Ao final, clique em Salvar Cadastro do Grupo para enviar o formulário.</p>
+
+        <!-- Informações do Aplicativo/Status -->
+        <div id="info-bar" class="text-xs mb-4 p-2 bg-gray-100 rounded-lg text-gray-500">
+            <p>Backend: <span class="font-mono">Supabase</span></p>
+            <p>Status de Conexão: <span id="db-status" class="font-semibold">Carregando...</span></p>
+        </div>
+
+        <form id="solidarity-group-form" onsubmit="event.preventDefault(); saveGroupData();">
+
+            <!-- SEÇÃO 1: DADOS DO GRUPO (Nenhum campo é required, mas deve ser salvo no Supabase) -->
+            <section id="group-data-section" class="mb-8 p-6 bg-green-50 rounded-lg border border-green-200">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20h-5v-2a3 3 0 00-5.356-1.857M17 20v-2c0-.592-.323-1.137-.833-1.432m0 0a3.001 3.001 0 00-5.334 0M12 20v-2c0-.592-.323-1.137-.833-1.432M12 20v-2a3.001 3.001 0 00-5.334 0M4 18h5v2H4V18z"></path></svg>
+                    Informações do Grupo
+                </h2>
+                
+                <div class="mb-4">
+                    <label for="groupName" class="block text-sm font-medium text-gray-700">Nome do Grupo/Empreendimento</label>
+                    <input type="text" id="groupName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="groupRepresentativeName" class="block text-sm font-medium text-gray-700">Nome do representante</label>
+                    <input type="text" id="groupRepresentativeName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                </div>
+
+                <div class="mb-4">
+                    <label for="groupContact" class="block text-sm font-medium text-gray-700">E-mail de Contato</label>
+                    <input type="email" id="groupContact" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border" placeholder="exemplo@dominio.com">
+                </div>
+
+                <!-- NOVO CAMPO: Possui Sede Própria (Toggle) -->
+                <div class="mb-4">
+                    <label for="hasOwnHeadquarters" class="block text-sm font-medium text-gray-700">O grupo/empreendimento possui sede própria?</label>
+                    <select id="hasOwnHeadquarters" onchange="toggleHeadquartersAddress()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                        <option value="" disabled selected>Selecione</option>
+                        <option value="Sim">Sim</option>
+                        <option value="Não">Não</option>
+                    </select>
+                </div>
+                
+                <!-- NOVO CAMPO CONDICIONAL: Endereço da Sede -->
+                <div id="headquartersAddressField" class="mb-4 hidden">
+                    <label for="headquartersAddress" class="block text-sm font-medium text-gray-700">Endereço da Sede Própria (Rua, Nº, Bairro, Cidade, Estado)</label>
+                    <input type="text" id="headquartersAddress" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                </div>
+                
+            </section>
+
+            <!-- SEÇÃO 2: DADOS DOS MEMBROS (Dinâmico) -->
+            <section class="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    Cadastro de Membros
+                </h2>
+                
+                <!-- Formulário de Adição de Membro -->
+                <div id="member-add-form" class="p-4 mb-4 border border-blue-300 rounded-lg bg-white">
+                    <h3 class="font-semibold text-blue-700 mb-3">Adicionar Novo Membro <span class="text-red-500 font-normal text-sm">(* Campos obrigatórios)</span></h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        
+                        <!-- Linha 1: Nome, Nascimento -->
+                        <div class="lg:col-span-2"> <!-- Nome Completo -->
+                            <label for="memberName" class="block text-xs font-medium text-gray-700">Nome Completo <span class="text-red-500 font-bold">*</span></label>
+                            <input type="text" id="memberName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+                        <div> <!-- Data de Nascimento -->
+                            <label for="memberBirthDate" class="block text-xs font-medium text-gray-700">Data de Nascimento <span class="text-red-500 font-bold">*</span></label>
+                            <input type="date" id="memberBirthDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+                        
+                        <!-- Linha 2: Nome da Mãe -->
+                        <div class="lg:col-span-3">
+                            <label for="memberMothersName" class="block text-xs font-medium text-gray-700">Nome Completo da Mãe <span class="text-red-500 font-bold">*</span></label>
+                            <input type="text" id="memberMothersName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+                        
+                        <!-- Linha 3: Endereço / CEP -->
+                        <div class="lg:col-span-2"> <!-- Endereço Completo -->
+                            <label for="memberAddress" class="block text-xs font-medium text-gray-700">Endereço Completo (Rua, Nº, Bairro) <span class="text-red-500 font-bold">*</span></label>
+                            <input type="text" id="memberAddress" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+                        <div> <!-- CEP (COM MÁSCARA E PATTERN) -->
+                            <label for="memberCEP" class="block text-xs font-medium text-gray-700">CEP (00000-000) <span class="text-red-500 font-bold">*</span></label>
+                            <input type="text" id="memberCEP" placeholder="Ex: 00000-000" maxlength="9" pattern="^\d{5}-\d{3}$" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+
+                        <!-- Linha 4: Contato / E-mail -->
+                        <div> <!-- Celular (COM MÁSCARA E PATTERN) -->
+                            <label for="memberPhone" class="block text-xs font-medium text-gray-700">Celular ((00) 90000-0000) <span class="text-red-500 font-bold">*</span></label>
+                            <input type="tel" id="memberPhone" placeholder="Ex: (99) 99999-9999" maxlength="15" pattern="^\(\d{2}\) \d{4,5}-\d{4}$" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+                        <div class="lg:col-span-2"> <!-- E-mail -->
+                            <label for="memberEmail" class="block text-xs font-medium text-gray-700">E-mail <span class="text-red-500 font-bold">*</span></label>
+                            <input type="email" id="memberEmail" placeholder="exemplo@dominio.com" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+
+                        <!-- Linha 5: Documentos / CNPJ -->
+                        <div> <!-- RG -->
+                            <label for="memberRG" class="block text-xs font-medium text-gray-700">RG <span class="text-red-500 font-bold">*</span></label>
+                            <input type="text" id="memberRG" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+                        <div> <!-- CPF (COM MÁSCARA E PATTERN) -->
+                            <label for="memberCPF" class="block text-xs font-medium text-gray-700">CPF (000.000.000-00) <span class="text-red-500 font-bold">*</span></label>
+                            <input type="text" id="memberCPF" placeholder="Ex: 000.000.000-00" maxlength="14" pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+                        <div> <!-- MEI/CNPJ (Não Obrigatório) -->
+                            <label for="memberCNPJ" class="block text-xs font-medium text-gray-700">MEI/CNPJ</label>
+                            <input type="text" id="memberCNPJ" placeholder="Opcional" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+
+                        <!-- SEÇÃO: DADOS DEMOGRÁFICOS -->
+                        <div class="lg:col-span-3 pt-4 border-t border-blue-100">
+                             <h4 class="font-semibold text-sm text-gray-700 mb-2">Dados Demográficos e Sociais</h4>
+                        </div>
+                        <div> <!-- Gênero -->
+                            <label for="memberGender" class="block text-xs font-medium text-gray-700">Gênero <span class="text-red-500 font-bold">*</span></label>
+                            <select id="memberGender" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                                <option value="" disabled selected>Selecione</option>
+                                <option value="Mulher cisgênero">Mulher cisgênero</option>
+                                <option value="Homem cisgênero">Homem cisgênero</option>
+                                <option value="Mulher transgênero">Mulher transgênero</option>
+                                <option value="Homem transgênero">Homem transgênero</option>
+                                <option value="Não-Binário">Não-Binário</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                        <div> <!-- Etnia -->
+                            <label for="memberEthnicity" class="block text-xs font-medium text-gray-700">Etnia / Cor <span class="text-red-500 font-bold">*</span></label>
+                            <select id="memberEthnicity" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                                <option value="" disabled selected>Selecione</option>
+                                <option value="Branca">Branca</option>
+                                <option value="Preta">Preta</option>
+                            <option value="Parda">Parda</option>
+                                <option value="Amarela">Amarela</option>
+                                <option value="Indígena">Indígena</option>
+                            </select>
+                        </div>
+                        <div> <!-- Escolaridade -->
+                            <label for="memberEducation" class="block text-xs font-medium text-gray-700">Escolaridade <span class="text-red-500 font-bold">*</span></label>
+                            <select id="memberEducation" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                                <option value="" disabled selected>Selecione</option>
+                                <option value="Analfabeto">Analfabeto</option>
+                                <option value="Ensino Fundamental Incompleto">Fundamental Incompleto</option>
+                                <option value="Ensino Fundamental Completo">Fundamental Completo</option>
+                                <option value="Ensino Médio Incompleto">Médio Incompleto</option>
+                                <option value="Ensino Médio Completo">Médio Completo</option>
+                                <option value="Ensino Superior Incompleto">Superior Incompleto</option>
+                                <option value="Ensino Superior Completo">Superior Completo</option>
+                                <option value="Pós-graduação/Mestrado/Doutorado">Pós-graduação ou mais</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Novo campo: Quantas pessoas mora na sua casa? -->
+                        <div> 
+                            <label for="memberHouseholdSize" class="block text-xs font-medium text-gray-700">Quantas pessoas mora na sua casa? <span class="text-red-500 font-bold">*</span></label>
+                            <input type="number" id="memberHouseholdSize" min="1" placeholder="Nº de Pessoas" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+
+
+                        <!-- SEÇÃO: DADOS DO EMPREENDIMENTO E RENDA -->
+                        <div class="lg:col-span-3 pt-4 border-t border-blue-100">
+                             <h4 class="font-semibold text-sm text-gray-700 mb-2">Dados do Empreendimento e Renda</h4>
+                        </div>
+                        
+                        <div class="lg:col-span-3"> <!-- Novo campo: Qual sua função dentro do grupo? -->
+                            <label for="memberRole" class="block text-xs font-medium text-gray-700">Qual sua função dentro do grupo? (Ex: Coordenador, Produção, Financeiro) <span class="text-red-500 font-bold">*</span></label>
+                            <input type="text" id="memberRole" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+
+                        <div class="lg:col-span-3"> <!-- Novo campo: Quais produtos ou serviços oferecem? -->
+                            <label for="memberProducts" class="block text-xs font-medium text-gray-700">Quais produtos ou serviços oferecem? <span class="text-red-500 font-bold">*</span></label>
+                            <input type="text" id="memberProducts" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+
+                        <div class="lg:col-span-3"> <!-- Novo campo: Quais matérias primas utiliza? -->
+                            <label for="memberRawMaterials" class="block text-xs font-medium text-gray-700">Quais matérias primas utiliza? <span class="text-red-500 font-bold">*</span></label>
+                            <input type="text" id="memberRawMaterials" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+                        
+                        <div class="lg:col-span-2"> <!-- Novo campo: Qual a renda média mensal obtida no empreendimento? -->
+                            <label for="memberMonthlyIncome" class="block text-xs font-medium text-gray-700">Qual a renda média mensal obtida no empreendimento? <span class="text-red-500 font-bold">*</span></label>
+                            <select id="memberMonthlyIncome" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                                <option value="" disabled selected>Selecione a faixa de Salário Mínimo (SM)</option>
+                                <option value="Ate 1 SM">Até 1 SM</option>
+                                <option value="Mais de 1 SM ate 2 SM">Mais de 1 SM até 2 SM</option>
+                                <option value="Mais de 2 SM ate 3 SM">Mais de 2 SM até 3 SM</option>
+                                <option value="Mais de 3 SM ate 5 SM">Mais de 3 SM até 5 SM</option>
+                                <option value="Acima de 5 SM">Acima de 5 SM</option>
+                            </select>
+                        </div>
+                        
+                        <div class="lg:col-span-3"> <!-- Novo campo: Qual seu envolvimento com o movimento da Economia Solidária? -->
+                            <label for="memberSolidarityInvolvement" class="block text-xs font-medium text-gray-700">Qual seu envolvimento com o movimento da Economia Solidária? <span class="text-red-500 font-bold">*</span></label>
+                            <input type="text" id="memberSolidarityInvolvement" placeholder="Ex: Participa de feiras, conselhos, formações, etc." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+
+                        <!-- Campos Condicionais de Atividade Econômica -->
+                        <div class="lg:col-span-3"> <!-- Novo campo: Desenvolve outra atividade econômica? (Toggle) -->
+                            <label for="memberOtherActivityToggle" class="block text-xs font-medium text-gray-700">Desenvolve outra atividade econômica além do empreendimento? <span class="text-red-500 font-bold">*</span></label>
+                            <select id="memberOtherActivityToggle" onchange="toggleOtherActivityField()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                                <option value="" disabled selected>Selecione</option>
+                                <option value="Sim">Sim</option>
+                                <option value="Não">Não</option>
+                            </select>
+                        </div>
+                        <div id="memberOtherActivityField" class="lg:col-span-3 hidden">
+                            <label for="memberOtherActivity" class="block text-xs font-medium text-gray-700">Qual atividade? <span class="text-red-500 font-bold">*</span></label>
+                            <input type="text" id="memberOtherActivity" placeholder="Ex: Professor(a), Motorista de App, etc." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
+                        </div>
+
+                        <!-- Linha Final: Botão de Adicionar -->
+                        <div class="col-span-full pt-4">
+                            <button type="button" onclick="addMember()" class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition text-sm font-semibold">
+                                + Adicionar Membro
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Membros Adicionados -->
+                <h3 class="font-semibold text-gray-700 mb-3 mt-6">Membros Cadastrados (<span id="member-count">0</span>)</h3>
+                <div id="member-list-container" class="space-y-3">
+                    <!-- Membros serão injetados aqui -->
+                </div>
+            </section>
+
+            <!-- SEÇÃO 3: BOTÃO SALVAR E FEEDBACK -->
+            <div class="flex flex-col sm:flex-row justify-between items-center pt-6 border-t">
+                <!-- Status Message vai indicar a regra de habilitação -->
+                <p id="save-status" class="text-sm text-gray-600 mb-4 sm:mb-0">⚠️ Adicione pelo menos um membro para habilitar o botão de salvar.</p>
+                <button type="submit" id="save-button" class="btn-primary text-white py-3 px-8 rounded-full font-bold shadow-lg hover:shadow-xl transition duration-200 flex items-center justify-center" disabled>
+                    <svg id="save-icon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-4 5l4-4m0 0l4 4m-4-4v12"></path></svg>
+                    Salvar Cadastro do Grupo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Alerta Customizado -->
+<div id="custom-alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg max-w-sm w-full mx-4 shadow-2xl">
+        <h3 id="alert-title" class="text-lg font-bold mb-3 text-red-600">Alerta</h3>
+        <p id="alert-message" class="text-gray-700 mb-4"></p>
+        <div class="flex justify-end">
+            <button onclick="closeCustomAlert()" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition">Entendi</button>
+        </div>
+    </div>
+</div>
+
+<!-- Supabase SDK e Lógica da Aplicação -->
+<script type="module">
+    // Importação do Supabase
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
+
+    // =========================================================================================
+    // ⚠️ ATENÇÃO: É OBRIGATÓRIO PREENCHER CORRETAMENTE A URL e CHAVE ANON (PUBLIC) ⚠️
+    // =========================================================================================
+    // Substitua estes valores pela sua URL e chave anon (public) real do Supabase
+    const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnYXJjY3BybXZncXN2aXZuZXJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTE2NTQ1OSwiZXhwIjoyMDc0NzQxNDU5fQ.CIZo0X0ua2teiR4zfUJnSA1WfOP_HFzDZPA0dBjsGtY'; // <---- SUBSTITUA ESTE VALOR!
+
+    // Variáveis globais
+    let supabase = null;
+    let members = []; // Estado local para os membros do grupo
+
+    // Funções de Utilidade (Disponíveis globalmente)
+    window.addMember = addMember;
+    window.removeMember = removeMember;
+    window.saveGroupData = saveGroupData;
+    window.customAlert = customAlert;
+    window.closeCustomAlert = closeCustomAlert;
+    window.toggleOtherActivityField = toggleOtherActivityField;
+    window.toggleHeadquartersAddress = toggleHeadquartersAddress; // Nova função
+    window.updateMemberCountAndList = updateMemberCountAndList; 
+    
+    // --- FUNÇÕES DE MÁSCARA ---
+
+    /**
+     * Aplica a máscara de CEP: 00000-000
+     */
+    function maskCEP(value) {
+        value = value.replace(/\D/g, ""); // Remove tudo o que não é dígito
+        value = value.replace(/^(\d{5})(\d)/, "$1-$2"); // Coloca hífen depois do 5º dígito
+        return value.substring(0, 9);
+    }
+
+    /**
+     * Aplica a máscara de CPF: 000.000.000-00
+     */
+    function maskCPF(value) {
+        value = value.replace(/\D/g, ""); // Remove tudo o que não é dígito
+        value = value.replace(/(\d{3})(\d)/, "$1.$2");
+        value = value.replace(/(\d{3})(\d)/, "$1.$2");
+        value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        return value.substring(0, 14);
+    }
+
+    /**
+     * Aplica a máscara de Celular: (00) 90000-0000
+     */
+    function maskPhone(value) {
+        value = value.replace(/\D/g, ""); // Remove tudo o que não é dígito
+        
+        // (00) 0000-0000 ou (00) 00000-0000
+        if (value.length > 2) {
+            value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
+        }
+        
+        // Verifica se é 9 dígitos (celular) ou 8 (fixo) após o código de área
+        if (value.length > 10 && value.length <= 15) { // (00) 9xxxx-xxxx
+             value = value.replace(/(\d{4,5})(\d)/, "$1-$2");
+        } else if (value.length > 9) { // (00) xxxx-xxxx
+             value = value.replace(/(\d{4})(\d)/, "$1-$2");
+        }
+
+        return value.substring(0, 15);
+    }
+
+    /**
+     * Inicializa os event listeners para as máscaras
+     */
+    function setupMasks() {
+        const cepInput = document.getElementById('memberCEP');
+        const cpfInput = document.getElementById('memberCPF');
+        const phoneInput = document.getElementById('memberPhone');
+        
+        if (cepInput) {
+            cepInput.addEventListener('input', (e) => {
+                e.target.value = maskCEP(e.target.value);
+            });
+        }
+        
+        if (cpfInput) {
+            cpfInput.addEventListener('input', (e) => {
+                e.target.value = maskCPF(e.target.value);
+            });
+        }
+
+        if (phoneInput) {
+            phoneInput.addEventListener('input', (e) => {
+                e.target.value = maskPhone(e.target.value);
+            });
+        }
+    }
+    
+    // --- FUNÇÕES DE UTILDADE DO UI ---
+
+    /**
+     * Exibe um alerta customizado na tela.
+     */
+    function customAlert(title, message, isError = true) {
+        const modal = document.getElementById('custom-alert-modal');
+        const titleElement = document.getElementById('alert-title');
+        const messageElement = document.getElementById('alert-message');
+
+        if (!modal || !titleElement || !messageElement) {
+            console.error(`Falha ao exibir alerta: ${title} - ${message}. Um ou mais elementos do modal não foram encontrados no DOM.`);
+            document.getElementById('save-status').textContent = `[ERRO DE UI] ${title}: ${message}`;
+            return;
+        }
+
+        titleElement.textContent = title;
+        messageElement.textContent = message;
+        // Atualiza a classe de cor da borda/título
+        titleElement.className = isError ? 'text-lg font-bold mb-3 text-red-600' : 'text-lg font-bold mb-3 text-green-600';
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    /**
+     * Fecha o modal de alerta customizado.
+     */
+    function closeCustomAlert() {
+        const modal = document.getElementById('custom-alert-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    /**
+     * Habilita/Desabilita o botão de salvar e mostra um spinner.
+     */
+    function setLoading(isLoading) {
+        const button = document.getElementById('save-button');
+        
+        if (!button) return; 
+
+        button.disabled = isLoading;
+
+        if (isLoading) {
+            button.classList.add('bg-opacity-70');
+            // Substitui o conteúdo do botão por um spinner e texto "Salvando..."
+            button.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Salvando...`;
+        } else {
+            button.classList.remove('bg-opacity-70');
+            // Restaura o ícone original e texto e reavalia a UI (CRÍTICO)
+            button.innerHTML = `<svg id="save-icon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-4 5l4-4m0 0l4 4m-4-4v12"></path></svg> Salvar Cadastro do Grupo`;
+            updateMemberCountAndList();
+        }
+    }
+    
+    /**
+     * Alterna a visibilidade do campo de Endereço da Sede.
+     */
+    function toggleHeadquartersAddress() {
+        const toggleElement = document.getElementById('hasOwnHeadquarters');
+        const fieldContainer = document.getElementById('headquartersAddressField');
+        const addressInput = document.getElementById('headquartersAddress');
+        
+        if (!toggleElement || !fieldContainer || !addressInput) return;
+
+        const toggle = toggleElement.value;
+        
+        if (toggle === 'Sim') {
+            fieldContainer.classList.remove('hidden');
+        } else {
+            fieldContainer.classList.add('hidden');
+            addressInput.value = ''; // Limpa o campo se for 'Não'
+        }
+    }
+
+
+    /**
+     * Atualiza a contagem e a lista de membros, e verifica as condições para habilitar o botão de salvar.
+     */
+    function updateMemberCountAndList() {
+        const memberCountElement = document.getElementById('member-count');
+        const listContainer = document.getElementById('member-list-container');
+        const saveButton = document.getElementById('save-button');
+        const saveStatus = document.getElementById('save-status');
+
+        if (!memberCountElement || !listContainer || !saveButton || !saveStatus) {
+            console.warn("Elementos do UI não encontrados. Pulando atualização.");
+            return;
+        }
+        
+        // 1. ATUALIZAÇÃO DO CONTADOR
+        memberCountElement.textContent = members.length;
+        listContainer.innerHTML = ''; // Limpa a lista para reconstruir
+        
+        // 2. REGRA DEFINITIVA: SÓ PODE SALVAR SE HOUVER MEMBROS E O SUPABASE ESTIVER CONECTADO
+        const isSupabaseReady = supabase !== null;
+        // O botão é habilitado SE houver membros E o Supabase estiver pronto
+        const canSave = members.length > 0 && isSupabaseReady; 
+        
+        // 3. LÓGICA DE HABILITAÇÃO DO BOTÃO E MENSAGEM DE STATUS
+        saveButton.disabled = !canSave;
+        
+        if (!isSupabaseReady) {
+            saveStatus.textContent = '⚠️ ERRO DE CONFIGURAÇÃO: O Supabase não está pronto. Preencha a URL e a Chave Anon.';
+            saveButton.disabled = true; 
+        } else if (members.length === 0) {
+             // Estado solicitado: botão desabilitado se 0 membros
+             saveStatus.textContent = '⚠️ Adicione pelo menos um membro para habilitar o botão de salvar.';
+        } else { // canSave is true
+            // Estado solicitado: botão habilitado se > 0 membros
+            saveStatus.textContent = '✅ *PRONTO!* Botão Salvar habilitado. Você pode enviar o cadastro.';
+        }
+        
+        // 4. ATUALIZAÇÃO DA LISTA VISUAL
+        if (members.length === 0) {
+            const noMembersMessage = `
+                <p id="no-members-message" class="text-sm text-gray-500 p-4 border rounded-md bg-white">
+                    Nenhum membro adicionado ainda. Use o formulário acima para começar.
+                </p>
+            `;
+            listContainer.innerHTML = noMembersMessage;
+        } else {
+            members.forEach((member, index) => {
+                // Formata a data de nascimento para exibição.
+                const formattedBirthDate = member.birthDate ? new Date(member.birthDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'N/A';
+                
+                const memberCard = `
+                    <div class="p-4 border rounded-lg bg-white flex justify-between items-center transition hover:bg-gray-50">
+                        <div class="flex-grow min-w-0">
+                            <p class="font-semibold text-gray-800 truncate">${member.name || 'Membro sem nome'} (ID: ${index + 1})</p>
+                            <p class="text-xs text-gray-600 truncate">
+                                CPF: ${member.cpf || 'N/A'} | Celular: ${member.phone || 'N/A'}
+                            </p>
+                        </div>
+                        <button type="button" onclick="removeMember(${index})" class="ml-4 text-red-500 hover:text-red-700 p-2 rounded-full transition bg-red-100">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+                listContainer.insertAdjacentHTML('beforeend', memberCard);
+            });
+        }
+    }
+
+    // --- LÓGICA DE MEMBROS ---
+
+    /**
+     * Alterna a visibilidade e a obrigatoriedade do campo de Outra Atividade.
+     */
+    function toggleOtherActivityField() {
+        const toggleElement = document.getElementById('memberOtherActivityToggle');
+        const fieldContainer = document.getElementById('memberOtherActivityField');
+        const otherActivityInput = document.getElementById('memberOtherActivity');
+        
+        if (!toggleElement || !fieldContainer || !otherActivityInput) return;
+
+        const toggle = toggleElement.value;
+        
+        // O campo condicional é sempre escondido e limpo se a resposta for 'Não'
+        if (toggle === 'Sim') {
+            fieldContainer.classList.remove('hidden');
+        } else {
+            fieldContainer.classList.add('hidden');
+            otherActivityInput.value = ''; 
+        }
+    }
+
+    /**
+     * Adiciona o membro à lista local, exigindo que todos os campos obrigatórios sejam preenchidos.
+     */
+    function addMember() {
+        
+        // Mapeamento dos IDs de todos os campos do formulário de membro
+        const memberFields = [
+            { id: 'memberName', label: 'Nome Completo', required: true },
+            { id: 'memberBirthDate', label: 'Data de Nascimento', required: true },
+            { id: 'memberMothersName', label: 'Nome Completo da Mãe', required: true },
+            { id: 'memberAddress', label: 'Endereço Completo', required: true },
+            // Máscara já garante o formato. pattern é usado para a validação.
+            { id: 'memberCEP', label: 'CEP', required: true, pattern: /^\d{5}-\d{3}$/ },
+            { id: 'memberPhone', label: 'Celular', required: true, pattern: /^\(\d{2}\) \d{4,5}-\d{4}$/ },
+            { id: 'memberEmail', label: 'E-mail', required: true, type: 'email' },
+            { id: 'memberRG', label: 'RG', required: true },
+            { id: 'memberCPF', label: 'CPF', required: true, pattern: /^\d{3}\.\d{3}\.\d{3}-\d{2}$/ },
+            { id: 'memberCNPJ', label: 'MEI/CNPJ', required: false }, // EXCEÇÃO: NÃO OBRIGATÓRIO
+            { id: 'memberGender', label: 'Gênero', required: true, type: 'select' },
+            { id: 'memberEthnicity', label: 'Etnia / Cor', required: true, type: 'select' },
+            { id: 'memberEducation', label: 'Escolaridade', required: true, type: 'select' },
+            // Requer um número maior que 0
+            { id: 'memberHouseholdSize', label: 'Nº de Pessoas na Casa', required: true, type: 'number' }, 
+            { id: 'memberRole', label: 'Função dentro do grupo', required: true },
+            { id: 'memberProducts', label: 'Produtos ou serviços', required: true },
+            { id: 'memberRawMaterials', label: 'Matérias primas', required: true },
+            { id: 'memberMonthlyIncome', label: 'Renda Média Mensal', required: true, type: 'select' },
+            { id: 'memberSolidarityInvolvement', label: 'Envolvimento com EcoSol', required: true },
+            { id: 'memberOtherActivityToggle', label: 'Desenvolve outra atividade?', required: true, type: 'select' },
+            // O campo 'memberOtherActivity' é condicional, validado à parte
+        ];
+        
+        // Variável de controle de validação
+        let isFormValid = true;
+        let firstInvalidInput = null;
+
+        // 1. VALIDAÇÃO DOS CAMPOS OBRIGATÓRIOS
+        for (const field of memberFields) {
+            const input = document.getElementById(field.id);
+            if (!input) continue; // Pula se o elemento não for encontrado
+
+            const value = input.value.trim();
+            // Limpa qualquer mensagem de validação customizada anterior
+            input.setCustomValidity(''); 
+
+            // Se for obrigatório
+            if (field.required) {
+                let isValueMissing = false;
+
+                if (field.type === 'number') {
+                    // Para campos numéricos, verifica se o valor é nulo ou < 1
+                    isValueMissing = !value || parseInt(value) < 1;
+                } else if (field.type === 'select') {
+                    // Para selects, verifica se o valor é vazio (opção 'Selecione' tem value="")
+                    isValueMissing = !value;
+                } else {
+                    // Para outros inputs (text, date, email), verifica se o valor é vazio
+                    isValueMissing = !value;
+                }
+
+                if (isValueMissing) {
+                    isFormValid = false;
+                    if (!firstInvalidInput) firstInvalidInput = input;
+                    // Define a mensagem de erro e reporta a validade
+                    input.setCustomValidity(`O campo "${field.label}" é de preenchimento obrigatório.`);
+                    input.reportValidity(); 
+                    // Remove a mensagem customizada na próxima entrada do usuário
+                    input.addEventListener('input', () => input.setCustomValidity(''), { once: true });
+                    break; 
+                }
+            }
+            
+            // 2. VALIDAÇÃO DE PADRÃO (REGEX), para campos com máscara, se preenchidos
+            if (field.pattern && value.length > 0 && !field.pattern.test(value)) {
+                isFormValid = false;
+                if (!firstInvalidInput) firstInvalidInput = input;
+                input.setCustomValidity(`O campo "${field.label}" não está no formato correto. Verifique o exemplo!`);
+                input.reportValidity();
+                input.addEventListener('input', () => input.setCustomValidity(''), { once: true });
+                break; 
+            }
+        }
+
+        // 3. VALIDAÇÃO DO CAMPO CONDICIONAL (Outra Atividade)
+        if (isFormValid) {
+            const otherActivityToggle = document.getElementById('memberOtherActivityToggle').value;
+            if (otherActivityToggle === 'Sim') {
+                const otherActivityInput = document.getElementById('memberOtherActivity');
+                otherActivityInput.setCustomValidity(''); // Limpa validade anterior
+                if (!otherActivityInput.value.trim()) {
+                    isFormValid = false;
+                    firstInvalidInput = otherActivityInput;
+                    otherActivityInput.setCustomValidity(`O campo "Qual atividade?" é de preenchimento obrigatório, pois você selecionou "Sim" acima.`);
+                    otherActivityInput.reportValidity();
+                    otherActivityInput.addEventListener('input', () => otherActivityInput.setCustomValidity(''), { once: true });
+                }
+            }
+        }
+
+        // Se o formulário não for válido, exibe o alerta e foca no campo.
+        if (!isFormValid) {
+            customAlert(
+                "Preenchimento Obrigatório", 
+                `Todos os campos (exceto MEI/CNPJ) devem ser preenchidos para adicionar um novo membro. Por favor, preencha o campo marcado.`, 
+                true
+            );
+            if (firstInvalidInput) {
+                firstInvalidInput.focus();
+            }
+            return;
+        }
+
+        // --- SE PASSOU NA VALIDAÇÃO, COLETA OS DADOS E ADICIONA ---
+        
+        const getVal = (id) => document.getElementById(id)?.value.trim() || null;
+        const getValFromSelect = (id) => document.getElementById(id)?.value || null;
+        
+        const otherActivityToggle = getValFromSelect('memberOtherActivityToggle');
+        // Pega o valor da atividade ou define 'Nenhuma' se a resposta for 'Não'
+        const otherActivity = (otherActivityToggle === 'Sim' && getVal('memberOtherActivity')) ? getVal('memberOtherActivity') : 'Nenhuma';
+
+
+        // Cria o objeto do novo membro
+        const newMember = {
+            // Dados Pessoais
+            name: getVal('memberName'), 
+            birthDate: getVal('memberBirthDate'), 
+            mothersName: getVal('memberMothersName'), 
+            address: getVal('memberAddress'), 
+            cep: getVal('memberCEP'), 
+            phone: getVal('memberPhone'), 
+            email: getVal('memberEmail'), 
+            rg: getVal('memberRG'), 
+            cpf: getVal('memberCPF'), 
+            cnpj: getVal('memberCNPJ'), 
+
+            // Dados Demográficos e Sociais
+            education: getValFromSelect('memberEducation'), 
+            gender: getValFromSelect('memberGender'), 
+            ethnicity: getValFromSelect('memberEthnicity'), 
+            householdSize: parseInt(getVal('memberHouseholdSize')) || null,
+
+            // Dados do Empreendimento e Renda
+            memberRole: getVal('memberRole'), 
+            memberProducts: getVal('memberProducts'), 
+            memberRawMaterials: getVal('memberRawMaterials'), 
+            monthlyIncome: getValFromSelect('memberMonthlyIncome'), 
+            solidarityInvolvement: getVal('memberSolidarityInvolvement'),
+            otherActivityToggle,
+            otherActivity,
+        };
+        members.push(newMember);
+        
+        console.log(`Membro adicionado: ${newMember.name}. Total de membros: ${members.length}`); 
+
+        // 5. Limpa os campos do DIV de adição de membro (exceto dropdowns, que voltam ao estado inicial)
+        const inputsToClear = document.querySelectorAll('#member-add-form input, #member-add-form select');
+        inputsToClear.forEach(input => {
+            if (input.type !== 'submit' && input.type !== 'button') {
+                if (input.tagName === 'SELECT') {
+                    // Define o valor como vazio para voltar ao 'Selecione'
+                    input.value = ''; 
+                } else {
+                    input.value = '';
+                }
+            }
+        });
+
+        // O campo condicional 'Outra Atividade' deve ser escondido
+        document.getElementById('memberOtherActivityField')?.classList.add('hidden');
+
+        // Atualiza a lista visual e reavalia a habilitação do botão!
+        updateMemberCountAndList(); 
+        
+        const saveStatus = document.getElementById('save-status');
+        if (saveStatus) {
+            saveStatus.textContent = `Membro ${newMember.name} adicionado com sucesso! Adicione mais membros ou clique em Salvar.`;
+        }
+    }
+
+    /**
+     * Remove um membro da lista local pelo índice.
+     */
+    function removeMember(index) {
+        if (index >= 0 && index < members.length) {
+            const removedName = members[index].name || 'Membro';
+            members.splice(index, 1);
+            // Atualiza a lista visual e reavalia a habilitação do botão!
+            updateMemberCountAndList(); 
+            const saveStatus = document.getElementById('save-status');
+            if (saveStatus) {
+                saveStatus.textContent = `Membro ${removedName} removido.`;
+            }
+        }
+    }
+
+    // --- LÓGICA DO SUPABASE E SALVAMENTO ---
+
+    /**
+     * Inicializa o cliente Supabase.
+     */
+    function initSupabase() {
+        members = []; 
+
+        const dbStatus = document.getElementById('db-status');
+
+        if (SUPABASE_ANON_KEY.includes("SUA_CHAVE_ANON_PUBLIC_AQUI")) {
+            const errorMessage = "❌ ERRO FATAL: Configuração Supabase ausente. Preencha o placeholder SUPABASE_ANON_KEY no código-fonte.";
+            console.error(errorMessage);
+            if(dbStatus) dbStatus.textContent = 'Configuração Ausente';
+            
+            supabase = null; 
+            updateMemberCountAndList(); 
+            return;
+        }
+        
+        try {
+            console.log(`[Supabase Debug] Conectando a URL: ${SUPABASE_URL}`);
+            
+            // 1. Inicializa o cliente Supabase
+            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            if(dbStatus) dbStatus.textContent = '✅ Conectado ao Supabase';
+            updateMemberCountAndList(); 
+
+        } catch (error) {
+            console.error("Erro ao inicializar Supabase:", error);
+            customAlert("Erro no Supabase", `Falha ao iniciar o cliente: ${error.message}. Verifique sua URL e Chave Anon.`, true);
+            if(dbStatus) dbStatus.textContent = 'Erro na Inicialização';
+            supabase = null;
+            updateMemberCountAndList(); 
+        }
+    }
+    
+    /**
+     * Função principal para salvar os dados do grupo e membros no Supabase.
+     * AGORA UTILIZA INSERÇÃO EM DUAS TABELAS: 'groups' E 'members'.
+     */
+    async function saveGroupData() {
+        // Fallback de valores para os campos principais, já que não são REQUIRED
+        const getVal = (id) => document.getElementById(id)?.value.trim() || null;
+        const getValFromSelect = (id) => document.getElementById(id)?.value || null;
+
+        const groupName = getVal('groupName') || 'Sem Nome';
+        const groupContact = getVal('groupContact') || 'N/A';
+        const groupRepresentativeName = getVal('groupRepresentativeName') || 'N/A';
+        
+        // Novos campos da Seção 1
+        const hasOwnHeadquarters = getValFromSelect('hasOwnHeadquarters');
+        const headquartersAddress = (hasOwnHeadquarters === 'Sim' && getVal('headquartersAddress')) ? getVal('headquartersAddress') : 'N/A';
+        
+        // Validação final: precisa de conexão e pelo menos 1 membro
+        if (supabase === null || members.length === 0) {
+            customAlert("Ação Inválida", "Verifique a conexão com o Supabase e adicione pelo menos um membro.", true);
+            return;
+        }
+        
+        setLoading(true);
+        const saveStatus = document.getElementById('save-status');
+        if (saveStatus) saveStatus.textContent = 'Preparando para salvar o grupo...';
+
+        // 1. ESTRUTURA DE DADOS DO GRUPO (PARA A TABELA 'groups')
+        const groupData = {
+            group_name: groupName,
+            group_representative_name: groupRepresentativeName,
+            group_contact: groupContact,
+            members_count: members.length,
+            // NOVOS CAMPOS
+            has_own_headquarters: hasOwnHeadquarters,
+            headquarters_address: headquartersAddress, 
+        };
+
+        let groupRecordId = null;
+
+        try {
+            // ===============================================
+            // ETAPA 1: INSERIR O GRUPO E OBTER O ID
+            // ===============================================
+            const { data: groupInsertData, error: groupError } = await supabase
+                .from('groups') // Nome da Tabela de Grupos
+                .insert([groupData])
+                .select('id') // Seleciona apenas o ID gerado (chave primária)
+                .single();
+            
+            if (groupError) throw groupError;
+            
+            groupRecordId = groupInsertData.id;
+            if (saveStatus) saveStatus.textContent = `Grupo salvo com ID ${groupRecordId}. Inserindo ${members.length} membros...`;
+            
+            
+            // ===============================================
+            // ETAPA 2: PREPARAR E INSERIR OS MEMBROS
+            // ===============================================
+            if (members.length > 0) {
+                
+                // Mapeia o array local de membros para o formato da tabela 'members' do Supabase
+                const membersToInsert = members.map(member => ({
+                    // VÍNCULO CHAVE ESTRANGEIRA (group_id)
+                    group_id: groupRecordId, 
+                    
+                    // DADOS PESSOAIS
+                    member_name: member.name,
+                    member_birth_date: member.birthDate,
+                    member_mothers_name: member.mothersName,
+                    member_address: member.address,
+                    member_cep: member.cep,
+                    member_phone: member.phone,
+                    member_email: member.email,
+                    member_rg: member.rg,
+                    member_cpf: member.cpf,
+                    member_cnpj: member.cnpj,
+                    
+                    // DADOS DEMOGRÁFICOS E SOCIAIS
+                    member_education: member.education,
+                    member_gender: member.gender,
+                    member_ethnicity: member.ethnicity,
+                    member_household_size: member.householdSize, 
+
+                    // DADOS DO EMPREENDIMENTO E RENDA
+                    member_role: member.memberRole,
+                    member_products: member.memberProducts,
+                    member_raw_materials: member.memberRawMaterials,
+                    member_monthly_income: member.monthlyIncome,
+                    member_solidarity_involvement: member.solidarityInvolvement,
+                    member_other_activity_toggle: member.otherActivityToggle,
+                    member_other_activity: member.otherActivity,
+                }));
+                
+                // Inserção em lote (batch insert)
+                const { error: membersError } = await supabase
+                    .from('members') // Nome da Tabela de Membros
+                    .insert(membersToInsert);
+
+                if (membersError) throw membersError;
+            }
+
+            // ===============================================
+            // ETAPA 3: SUCESSO E LIMPEZA
+            // ===============================================
+            
+            if (saveStatus) saveStatus.textContent = `🎉 Sucesso! Grupo "${groupName}" e ${members.length} membros salvos com sucesso!`;
+            customAlert("Salvo com Sucesso", `O cadastro do grupo "${groupName}" e seus ${members.length} membros foi salvo no Supabase! ID do Grupo: ${groupRecordId}`, false);
+            
+            // Limpa o formulário principal e o estado após o sucesso
+            document.getElementById('solidarity-group-form').reset();
+            members = []; // Limpa o estado local
+            
+            // Garante que os campos condicionais estejam escondidos após a limpeza
+            document.getElementById('headquartersAddressField')?.classList.add('hidden');
+            document.getElementById('memberOtherActivityField')?.classList.add('hidden');
+            
+            // A atualização da lista e do botão é feita aqui
+            updateMemberCountAndList(); 
+
+        } catch (error) {
+            console.error("Erro ao salvar dados do grupo/membros no Supabase:", error);
+            // Mensagem de status detalhada no UI
+            if (saveStatus) saveStatus.textContent = '❌ Erro ao salvar dados. Verifique a consola.';
+            
+            // Alerta customizado com instruções claras de debug
+            customAlert(
+                "Erro de Permissão (RLS) ou Banco de Dados", 
+                `Ocorreu um erro ao salvar: ${error.message}.
+                1. Certifique-se de que as tabelas 'groups' e 'members' existem e estão configuradas corretamente.
+                2. VERIFIQUE SUAS POLÍTICAS RLS (Row Level Security) para permitir INSERT nas duas tabelas para o papel 'anon'.`, 
+                true
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // Inicializa o Supabase E as Máscaras ao carregar a janela
+    window.onload = function() {
+        initSupabase();
+        setupMasks(); 
+    };
+</script>
+</body>
+</html>

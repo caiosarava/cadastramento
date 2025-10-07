@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COMESOL - Acesso ao Cadastro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #e6f7e6; }
+        .card { box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
+        .btn-primary { background-color: #22c55e; transition: background-color 0.3s, transform 0.1s; }
+        .btn-primary:hover:not(:disabled) { background-color: #16a34a; transform: translateY(-1px); }
+        .btn-primary:disabled { background-color: #93c5fd; cursor: not-allowed; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="card bg-white p-8 md:p-10 rounded-xl w-full max-w-md">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-green-700">COMESOL</h1>
+            <p class="text-gray-500 mt-1" id="formTitle">Login</p>
+        </header>
+
+        <div id="statusMessage" class="hidden p-3 mb-4 rounded-lg text-sm text-center" role="alert"></div>
+
+        <form id="authForm" class="space-y-6">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="seu.email@exemplo.com">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                <input type="password" id="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="••••••••">
+            </div>
+
+            <button type="submit" id="authButton" class="btn-primary w-full text-white font-semibold py-2.5 rounded-lg flex items-center justify-center shadow-md">
+                <div id="loadingSpinner" class="hidden animate-spin h-5 w-5 mr-3 border-b-2 border-white rounded-full"></div>
+                <span id="buttonText">Entrar</span>
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <button id="toggleModeButton" class="text-sm text-green-600 hover:text-green-800 transition duration-150">
+                Ainda não tem acesso? Cadastrar Novo Grupo
+            </button>
+        </div>
+    </div>
+
+<script type="module">
+    const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnYXJjY3BybXZncXN2aXZuZXJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTE2NTQ1OSwiZXhwIjoyMDc0NzQxNDU5fQ.CIZo0X0ua2teiR4zfUJnSA1WfOP_HFzDZPA0dBjsGtY';
+
+    const authForm = document.getElementById('authForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const authButton = document.getElementById('authButton');
+    const toggleModeButton = document.getElementById('toggleModeButton');
+    const formTitle = document.getElementById('formTitle');
+    const statusMessage = document.getElementById('statusMessage');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const buttonText = document.getElementById('buttonText');
+
+    let currentMode = 'login';
+    let supabaseClient = null;
+
+    function displayStatus(message, className, duration = 0) {
+        statusMessage.textContent = message;
+        statusMessage.className = `p-3 mb-4 rounded-lg text-sm text-center ${className}`;
+        statusMessage.classList.remove('hidden');
+        if (duration > 0) setTimeout(() => statusMessage.classList.add('hidden'), duration);
+    }
+
+    function setLoading(isLoading) {
+        authButton.disabled = isLoading;
+        if (isLoading) {
+            buttonText.textContent = currentMode === 'login' ? 'Entrando...' : 'Cadastrando...';
+            loadingSpinner.classList.remove('hidden');
+        } else {
+            buttonText.textContent = currentMode === 'login' ? 'Entrar' : 'Cadastrar Novo Grupo';
+            loadingSpinner.classList.add('hidden');
+        }
+    }
+
+    function toggleAuthMode() {
+        currentMode = currentMode === 'login' ? 'signup' : 'login';
+        formTitle.textContent = currentMode === 'login' ? 'Login' : 'Cadastro de Acesso';
+        buttonText.textContent = currentMode === 'login' ? 'Entrar' : 'Cadastrar Novo Grupo';
+        toggleModeButton.textContent = currentMode === 'login'
+            ? 'Ainda não tem acesso? Cadastrar Novo Grupo'
+            : 'Já tem acesso? Fazer Login';
+    }
+
+    async function handleAuth(e) {
+        e.preventDefault();
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (!email || !password) {
+            displayStatus('Preencha email e senha.', 'bg-yellow-100 text-yellow-700', 3000);
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            let response;
+            if (currentMode === 'signup') {
+                response = await supabaseClient.auth.signUp({ email, password });
+            } else {
+                response = await supabaseClient.auth.signInWithPassword({ email, password });
+            }
+
+            const { data, error } = response;
+            if (error) throw error;
+
+            if (data.user) {
+                checkIfHasGroup(data.user.id);
+            } else {
+                displayStatus('Sucesso no cadastro! Verifique seu email para confirmar.', 'bg-blue-100 text-blue-700', 5000);
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error("Erro de Autenticação:", error.message);
+            displayStatus(`❌ Erro: ${error.message}`, 'bg-red-100 text-red-700', 5000);
+            setLoading(false);
+        }
+    }
+
+    async function checkIfHasGroup(userId) {
+        try {
+            const { data: groupData } = await supabaseClient
+                .from('groups')
+                .select('id')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            if (!groupData) {
+                window.location.href = 'cadastro.html';
+            } else {
+                window.location.href = 'visualizacao.html';
+            }
+        } catch (err) {
+            console.error('Erro ao verificar grupo:', err);
+            window.location.href = 'cadastro.html';
+        }
+    }
+
+    function initSupabase() {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (session && session.user) {
+                checkIfHasGroup(session.user.id);
+            } else {
+                authButton.disabled = false;
+            }
+        });
+    }
+
+    window.onload = function() {
+        initSupabase();
+        authForm.addEventListener('submit', handleAuth);
+        toggleModeButton.addEventListener('click', toggleAuthMode);
+    };
+</script>
+</body>
+</html>
