@@ -1,0 +1,40 @@
+/* Common styles */
+body { 
+    font-family: 'Inter', sans-serif; 
+    background-color: #e6f7e6; 
+}
+
+.card { 
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); 
+}
+
+.btn-primary { 
+    background-color: #22c55e; 
+    transition: background-color 0.3s, transform 0.1s; 
+}
+
+.btn-primary:hover:not(:disabled) { 
+    background-color: #16a34a; 
+    transform: translateY(-1px); 
+}
+
+.btn-primary:disabled { 
+    background-color: #93c5fd; 
+    cursor: not-allowed; 
+}
+
+/* Form styles */
+input:not(:placeholder-shown):not(:focus):invalid {
+    border-color: #ef4444;
+}
+
+/* Button styles */
+.btn-secondary { 
+    background-color: #f3f4f6; 
+    padding: 0.5rem 1rem; 
+    border-radius: 0.5rem; 
+}
+
+.btn-secondary:hover { 
+    background-color: #e5e7eb; 
+}

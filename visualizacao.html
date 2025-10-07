@@ -34,83 +34,86 @@
   </div>
 
   <script type="module">
-    const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+    import { GroupManager } from './js/group-manager.js';
+    import { showAlert } from './js/utils.js';
+    import { supabase } from './js/supabase.js';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let groupId = null;
+    const groupManager = new GroupManager();
 
-    async function loadData() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert('Sessão expirada. Faça login novamente.');
-        window.location.href = 'index.html';
-        return;
-      }
-
-      const { data: group } = await supabase
-        .from('groups')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!group) {
-        alert('Nenhum grupo cadastrado.');
-        window.location.href = 'cadastro.html';
-        return;
-      }
-
-      groupId = group.id;
-
-      document.getElementById('group-info').innerHTML = `
-        <div class="p-4 border rounded bg-gray-50">
-          <p><strong>Nome:</strong> ${group.group_name || ''}</p>
-          <p><strong>Representante:</strong> ${group.representative || ''}</p>
-          <p><strong>Email:</strong> ${group.email || ''}</p>
-        </div>
-      `;
-
-      const { data: members } = await supabase
-        .from('members')
-        .select('*')
-        .eq('group_id', group.id);
-
-      const membersList = document.getElementById('members-list');
-      membersList.innerHTML = '';
-      if (members && members.length > 0) {
-        members.forEach(m => {
-          const card = document.createElement('div');
-          card.className = 'p-4 border rounded bg-white';
-          card.innerHTML = `
-            <p><strong>Nome:</strong> ${m.name}</p>
-            <p><strong>CPF:</strong> ${m.cpf}</p>
-            <p><strong>Email:</strong> ${m.email}</p>
-            <p><strong>Telefone:</strong> ${m.phone}</p>
-            <p><strong>Gênero:</strong> ${m.gender}</p>
-            <p><strong>Etnia:</strong> ${m.ethnicity}</p>
-            <p><strong>Escolaridade:</strong> ${m.education}</p>
-            <p><strong>Função no Grupo:</strong> ${m.role}</p>
-            <p><strong>Produtos:</strong> ${m.products}</p>
-            <p><strong>Matérias-primas:</strong> ${m.rawMaterials}</p>
-            <p><strong>Renda Média:</strong> ${m.monthlyIncome}</p>
-          `;
-          membersList.appendChild(card);
-        });
-      } else {
-        membersList.innerHTML = '<p class="text-gray-500">Nenhum membro cadastrado.</p>';
-      }
-
-      document.getElementById('editButton').onclick = () => {
-        window.location.href = `cadastro.html?editId=${groupId}`;
-      };
+    async function displayGroupInfo(group) {
+        document.getElementById('group-info').innerHTML = `
+            <div class="p-4 border rounded bg-gray-50">
+                <p><strong>Nome:</strong> ${group.group_name || ''}</p>
+                <p><strong>Representante:</strong> ${group.representative || ''}</p>
+                <p><strong>Email:</strong> ${group.email || ''}</p>
+                <p><strong>Telefone:</strong> ${group.phone || ''}</p>
+                <p><strong>Cidade:</strong> ${group.city || ''}</p>
+                <p><strong>Estado:</strong> ${group.state || ''}</p>
+            </div>
+        `;
     }
 
+    function displayMembers(members) {
+        const membersList = document.getElementById('members-list');
+        membersList.innerHTML = '';
+        
+        if (members && members.length > 0) {
+            members.forEach(member => {
+                const card = document.createElement('div');
+                card.className = 'p-4 border rounded bg-white';
+                card.innerHTML = `
+                    <p><strong>Nome:</strong> ${member.name}</p>
+                    <p><strong>CPF:</strong> ${member.cpf}</p>
+                    <p><strong>Email:</strong> ${member.email || ''}</p>
+                    <p><strong>Telefone:</strong> ${member.phone}</p>
+                    <p><strong>Gênero:</strong> ${member.gender}</p>
+                    <p><strong>Etnia:</strong> ${member.ethnicity || ''}</p>
+                    <p><strong>Escolaridade:</strong> ${member.education || ''}</p>
+                    <p><strong>Função no Grupo:</strong> ${member.role}</p>
+                    <p><strong>Produtos:</strong> ${member.products || ''}</p>
+                    <p><strong>Matérias-primas:</strong> ${member.rawMaterials || ''}</p>
+                    <p><strong>Renda Média:</strong> ${member.monthlyIncome || ''}</p>
+                `;
+                membersList.appendChild(card);
+            });
+        } else {
+            membersList.innerHTML = '<p class="text-gray-500">Nenhum membro cadastrado.</p>';
+        }
+    }
+
+    async function initialize() {
+        try {
+            const initialized = await groupManager.initialize();
+            if (!initialized) return;
+
+            const data = await groupManager.loadExistingGroup();
+            if (!data) {
+                showAlert('Nenhum grupo cadastrado.', 'warning');
+                window.location.href = 'cadastro.html';
+                return;
+            }
+
+            const { group, members } = data;
+            displayGroupInfo(group);
+            displayMembers(members);
+
+            document.getElementById('editButton').onclick = () => {
+                window.location.href = `cadastro.html?editId=${group.id}`;
+            };
+        } catch (error) {
+            console.error('Error initializing view:', error);
+            showAlert('Erro ao carregar dados', 'error');
+        }
+    }
+
+    // Setup event listeners
     document.getElementById('logoutButton').onclick = async () => {
-      await supabase.auth.signOut();
-      window.location.href = 'index.html';
+        await supabase.auth.signOut();
+        window.location.href = 'index.html';
     };
 
-    loadData();
+    // Initialize the page
+    initialize();
   </script>
 </body>
 </html>

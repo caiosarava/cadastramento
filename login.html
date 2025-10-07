@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COMESOL - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="card bg-white p-8 md:p-10 rounded-xl w-full max-w-md">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-green-700">COMESOL</h1>
+            <p class="text-gray-500 mt-1" id="formTitle">Login</p>
+        </header>
+
+        <div id="statusMessage" class="hidden p-3 mb-4 rounded-lg text-sm text-center" role="alert"></div>
+
+        <form id="authForm" class="space-y-6">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="seu.email@exemplo.com">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                <input type="password" id="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="••••••••">
+            </div>
+
+            <button type="submit" id="authButton" class="btn-primary w-full text-white font-semibold py-2.5 rounded-lg flex items-center justify-center shadow-md">
+                <span id="loadingSpinner" class="hidden mr-2">
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </span>
+                <span id="buttonText">Entrar</span>
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <button id="toggleModeButton" class="text-sm text-green-600 hover:text-green-800 transition duration-150">
+                Ainda não tem acesso? Cadastrar Novo Grupo
+            </button>
+        </div>
+    </div>
+
+    <script type="module" src="js/auth.js"></script>
+</body>
+</html>
