@@ -1,19 +1,31 @@
 /**
  * Converte boolean para "Sim" ou "Não"
- * @param {boolean} value - O valor booleano
+ * @param {boolean|string} value - O valor a ser convertido
  * @returns {string} "Sim" para true, "Não" para false
  */
 export function booleanToYesNo(value) {
-    return value ? "Sim" : "Não";
+    if (typeof value === 'boolean') {
+        return value ? "Sim" : "Não";
+    }
+    if (typeof value === 'string') {
+        return value.toLowerCase() === 'true' || value === 'Sim' ? "Sim" : "Não";
+    }
+    return "Não"; // valor padrão
 }
 
 /**
  * Converte "Sim" ou "Não" para boolean
- * @param {string} value - "Sim" ou "Não"
+ * @param {string|boolean} value - O valor a ser convertido
  * @returns {boolean} true para "Sim", false para "Não"
  */
 export function yesNoToBoolean(value) {
-    return value === "Sim";
+    if (typeof value === 'boolean') {
+        return value;
+    }
+    if (typeof value === 'string') {
+        return value === 'Sim' || value.toLowerCase() === 'true';
+    }
+    return false; // valor padrão
 }
 
 /**

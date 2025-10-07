@@ -50,13 +50,19 @@ export class GroupManager {
 
     async saveGroup(groupData) {
         try {
-            // Converte "Sim"/"Não" para boolean antes de salvar
+            // Certifica-se de que has_headquarters seja um boolean antes de salvar
+            const has_headquarters = typeof groupData.has_headquarters === 'boolean' 
+                ? groupData.has_headquarters 
+                : groupData.has_headquarters === 'Sim';
+
             const dataToSave = {
                 ...groupData,
-                has_headquarters: yesNoToBoolean(groupData.has_headquarters),
+                has_headquarters,
                 user_id: this.user.id,
                 updated_at: new Date().toISOString()
             };
+
+            console.log('Dados a serem salvos:', dataToSave); // Para debug
 
             const { data: group, error } = await supabase
                 .from('groups')
@@ -64,14 +70,19 @@ export class GroupManager {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Erro do Supabase:', error); // Para debug
+                throw error;
+            }
+
+            // Converte o boolean de volta para "Sim"/"Não" para exibição
             return {
                 ...group,
-                has_headquarters: booleanToYesNo(group.has_headquarters)
+                has_headquarters: group.has_headquarters ? "Sim" : "Não"
             };
         } catch (error) {
-            console.error('Error saving group:', error);
-            throw error;
+            console.error('Erro ao salvar grupo:', error);
+            throw new Error(`Erro ao salvar grupo: ${error.message}`);
         }
     }
 
