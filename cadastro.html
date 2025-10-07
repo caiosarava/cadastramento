@@ -83,9 +83,8 @@
                 <div class="mb-4">
                     <label for="hasOwnHeadquarters" class="block text-sm font-medium text-gray-700">O grupo/empreendimento possui sede própria?</label>
                     <select id="hasOwnHeadquarters" onchange="toggleHeadquartersAddress()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
-                        <option value="" disabled selected>Selecione</option>
+                        <option value="Não" selected>Não</option>
                         <option value="Sim">Sim</option>
-                        <option value="Não">Não</option>
                     </select>
                 </div>
                 
@@ -470,9 +469,9 @@
         
         if (!toggleElement || !fieldContainer || !addressInput) return;
 
-        const toggle = toggleElement.value;
+        const hasHeadquarters = toggleElement.value === 'Sim';
         
-        if (toggle === 'Sim') {
+        if (hasHeadquarters) {
             fieldContainer.classList.remove('hidden');
         } else {
             fieldContainer.classList.add('hidden');
@@ -820,8 +819,8 @@
         const groupRepresentativeName = getVal('groupRepresentativeName') || 'N/A';
         
         // Novos campos da Seção 1
-        const hasOwnHeadquarters = getValFromSelect('hasOwnHeadquarters') || 'Não';
-        const headquartersAddress = (hasOwnHeadquarters === 'Sim' && getVal('headquartersAddress')) ? getVal('headquartersAddress') : 'N/A';
+        const hasOwnHeadquarters = getValFromSelect('hasOwnHeadquarters') === 'Sim';
+        const headquartersAddress = (hasOwnHeadquarters && getVal('headquartersAddress')) ? getVal('headquartersAddress') : 'N/A';
         
         // Validação final: precisa de conexão e pelo menos 1 membro
         if (supabase === null || members.length === 0) {
@@ -839,7 +838,7 @@
             representative: groupRepresentativeName,
             email: groupContact,
             phone: groupPhone,
-            has_headquarters: hasOwnHeadquarters === 'Sim', // Converte "Sim"/"Não" para boolean
+            has_headquarters: hasOwnHeadquarters, // Já é boolean
         };
 
         let groupRecordId = null;
