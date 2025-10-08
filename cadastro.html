@@ -840,6 +840,12 @@
         const saveStatus = document.getElementById('save-status');
         if (saveStatus) saveStatus.textContent = 'Preparando para salvar o grupo...';
 
+        // Verificar se o usuário está autenticado
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+            throw new Error('Usuário não está autenticado. Faça login novamente.');
+        }
+
         // 1. ESTRUTURA DE DADOS DO GRUPO (PARA A TABELA 'groups')
         const groupData = {
             group_name: groupName,
@@ -847,6 +853,7 @@
             email: groupContact,
             phone: groupPhone,
             has_headquarters: hasOwnHeadquarters, // Já é boolean
+            user_id: user.id, // Adiciona o ID do usuário autenticado
         };
 
         let groupRecordId = null;
