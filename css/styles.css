@@ -38,3 +38,32 @@ input:not(:placeholder-shown):not(:focus):invalid {
 .btn-secondary:hover { 
     background-color: #e5e7eb; 
 }
+
+/* Logout button styles */
+#logoutButton {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 50;
+    background-color: #dc2626;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s;
+}
+
+#logoutButton:hover {
+    background-color: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+#logoutButton svg {
+    margin-right: 0.5rem;
+    width: 1.25rem;
+    height: 1.25rem;
+}

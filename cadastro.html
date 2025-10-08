@@ -278,8 +278,9 @@
             <div class="flex flex-col sm:flex-row justify-between items-center pt-6 border-t">
                 <!-- Status Message vai indicar a regra de habilitação -->
                 <div class="flex items-center space-x-4">
-                    <button type="button" id="logoutButton" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-200">
-                        <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Botão de Logout Fixo -->
+                    <button type="button" id="logoutButton" class="fixed top-4 right-4 z-50 bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition duration-200 shadow-lg flex items-center font-semibold">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                         </svg>
                         Sair
