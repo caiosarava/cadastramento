@@ -274,10 +274,18 @@
                 </div>
             </section>
 
-            <!-- SEÇÃO 3: BOTÃO SALVAR E FEEDBACK -->
+            <!-- SEÇÃO 3: BOTÕES E FEEDBACK -->
             <div class="flex flex-col sm:flex-row justify-between items-center pt-6 border-t">
                 <!-- Status Message vai indicar a regra de habilitação -->
-                <p id="save-status" class="text-sm text-gray-600 mb-4 sm:mb-0">⚠️ Adicione pelo menos um membro para habilitar o botão de salvar.</p>
+                <div class="flex items-center space-x-4">
+                    <button type="button" id="logoutButton" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-200">
+                        <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        Sair
+                    </button>
+                    <p id="save-status" class="text-sm text-gray-600">⚠️ Adicione pelo menos um membro para habilitar o botão de salvar.</p>
+                </div>
                 <button type="submit" id="save-button" class="btn-primary text-white py-3 px-8 rounded-full font-bold shadow-lg hover:shadow-xl transition duration-200 flex items-center justify-center" disabled>
                     <svg id="save-icon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-4 5l4-4m0 0l4 4m-4-4v12"></path></svg>
                     Salvar Cadastro do Grupo
@@ -906,22 +914,15 @@
             }
 
             // ===============================================
-            // ETAPA 3: SUCESSO E LIMPEZA
+            // ETAPA 3: SUCESSO E REDIRECIONAMENTO
             // ===============================================
             
-            if (saveStatus) saveStatus.textContent = `🎉 Sucesso! Grupo "${groupName}" e ${members.length} membros salvos com sucesso!`;
-            customAlert("Salvo com Sucesso", `O cadastro do grupo "${groupName}" e seus ${members.length} membros foi salvo no Supabase! ID do Grupo: ${groupRecordId}`, false);
+            if (saveStatus) saveStatus.textContent = `🎉 Sucesso! Redirecionando para a visualização...`;
             
-            // Limpa o formulário principal e o estado após o sucesso
-            document.getElementById('solidarity-group-form').reset();
-            members = []; // Limpa o estado local
-            
-            // Garante que os campos condicionais estejam escondidos após a limpeza
-            document.getElementById('headquartersAddressField')?.classList.add('hidden');
-            document.getElementById('memberOtherActivityField')?.classList.add('hidden');
-            
-            // A atualização da lista e do botão é feita aqui
-            updateMemberCountAndList(); 
+            // Pequeno delay para mostrar a mensagem de sucesso antes de redirecionar
+            setTimeout(() => {
+                window.location.href = 'visualizacao.html';
+            }, 1500);
 
         } catch (error) {
             console.error("Erro ao salvar dados do grupo/membros no Supabase:", error);
@@ -940,6 +941,12 @@
             setLoading(false);
         }
     }
+
+    // Configurar o botão de logout
+    document.getElementById('logoutButton')?.addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'index.html';
+    });
 
     // Inicializa o Supabase E as Máscaras ao carregar a janela
     window.onload = function() {

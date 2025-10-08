@@ -42,20 +42,24 @@ function toggleAuthMode() {
 
 async function checkIfHasGroup(userId) {
     try {
-        const { data: groupData } = await supabase
+        const { data: groupData, error } = await supabase
             .from('groups')
             .select('id')
             .eq('user_id', userId)
             .maybeSingle();
 
-        if (!groupData) {
-            window.location.href = 'cadastro.html';
-        } else {
+        if (error) throw error;
+
+        if (groupData) {
+            // Se já tem um grupo cadastrado, vai para visualização
             window.location.href = 'visualizacao.html';
+        } else {
+            // Se não tem grupo, vai para o cadastro
+            window.location.href = 'cadastro.html';
         }
     } catch (err) {
         console.error('Erro ao verificar grupo:', err);
-        window.location.href = 'cadastro.html';
+        displayStatus(`Erro ao verificar dados: ${err.message}`, 'bg-red-100 text-red-700');
     }
 }
 
@@ -96,6 +100,29 @@ async function handleAuth(e) {
     }
 }
 
+async function redirectIfNotLoggedIn() {
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error) throw error;
+        
+        if (!user) {
+            window.location.href = 'login.html';
+            return null;
+        }
+
+        return user;
+    } catch (err) {
+        console.error('Erro ao verificar autenticação:', err);
+        displayStatus(`Erro ao verificar autenticação: ${err.message}`, 'bg-red-100 text-red-700');
+        window.location.href = 'login.html';
+        return null;
+    }
+}
+
 // Event Listeners
 elements.authForm.addEventListener('submit', handleAuth);
 elements.toggleModeButton.addEventListener('click', toggleAuthMode);
+
+// Export functions
+export { redirectIfNotLoggedIn, checkIfHasGroup };
