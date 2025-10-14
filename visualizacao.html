@@ -5,113 +5,593 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Visualização - COMESOL</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
-    .card { box-shadow: 0 0 15px rgba(0, 0, 0, 0.08); }
-    .btn-primary { background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; }
-    .btn-primary:hover { background-color: #1d4ed8; }
-    .btn-secondary { background-color: #f3f4f6; padding: 0.5rem 1rem; border-radius: 0.5rem; }
-    .btn-secondary:hover { background-color: #e5e7eb; }
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background-color: #f7fafc;
+    }
+    .card { 
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+    }
+    .btn-edit {
+      background-color: #3b82f6;
+      transition: all 0.2s;
+    }
+    .btn-edit:hover {
+      background-color: #2563eb;
+      transform: translateY(-1px);
+    }
+    .btn-delete {
+      background-color: #ef4444;
+      transition: all 0.2s;
+    }
+    .btn-delete:hover {
+      background-color: #dc2626;
+      transform: translateY(-1px);
+    }
+    .btn-save {
+      background-color: #10b981;
+      transition: all 0.2s;
+    }
+    .btn-save:hover {
+      background-color: #059669;
+    }
+    .btn-cancel {
+      background-color: #6b7280;
+      transition: all 0.2s;
+    }
+    .btn-cancel:hover {
+      background-color: #4b5563;
+    }
+    .field-display {
+      padding: 0.5rem;
+      border-radius: 0.375rem;
+      background-color: #f9fafb;
+    }
+    .field-edit {
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      width: 100%;
+    }
+    .field-edit:focus {
+      outline: none;
+      border-color: #3b82f6;
+      ring: 2px;
+      ring-color: rgba(59, 130, 246, 0.3);
+    }
+    #logoutButton {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 50;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
   </style>
 </head>
 <body>
+  <!-- Botão de Logout Fixo -->
+  <button id="logoutButton" class="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition duration-200 flex items-center font-semibold">
+    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+    </svg>
+    Sair
+  </button>
+
   <div class="min-h-screen p-6 flex justify-center">
-    <div class="card bg-white rounded-xl p-8 w-full max-w-5xl">
-      <header class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Dados do Grupo</h1>
-        <div class="space-x-2">
-          <button id="editButton" class="btn-primary">Editar</button>
-          <button id="logoutButton" class="btn-secondary">Sair</button>
-        </div>
+    <div class="card bg-white rounded-xl p-8 w-full max-w-6xl my-8 mr-4">
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Dados do Grupo</h1>
+        <p class="text-sm text-gray-600">Visualize e gerencie as informações do seu grupo e membros</p>
       </header>
 
-      <section id="group-info" class="mb-8"></section>
+      <!-- Informações do Grupo -->
+      <section id="group-info" class="mb-8 p-6 bg-green-50 rounded-lg border border-green-200">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20h-5v-2a3 3 0 00-5.356-1.857M17 20v-2c0-.592-.323-1.137-.833-1.432m0 0a3.001 3.001 0 00-5.334 0M12 20v-2c0-.592-.323-1.137-.833-1.432M12 20v-2a3.001 3.001 0 00-5.334 0M4 18h5v2H4V18z"></path>
+          </svg>
+          Informações do Grupo
+        </h2>
+        <div id="group-details" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dados do grupo serão inseridos aqui -->
+        </div>
+      </section>
 
-      <h2 class="text-xl font-semibold text-gray-700 mb-4">Membros</h2>
-      <div id="members-list" class="space-y-4"></div>
+      <!-- Membros -->
+      <section class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-gray-700 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            Membros Cadastrados (<span id="member-count">0</span>)
+          </h2>
+          <button id="addMemberButton" class="bg-blue-500 text-white py-2 px-6 rounded-lg hover:bg-blue-600 transition duration-200 flex items-center font-semibold shadow-md">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Adicionar Membro
+          </button>
+        </div>
+        <div id="members-list" class="space-y-4">
+          <!-- Membros serão inseridos aqui -->
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmação de Exclusão -->
+  <div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg max-w-md w-full mx-4 shadow-2xl">
+      <h3 class="text-lg font-bold mb-3 text-red-600">Confirmar Exclusão</h3>
+      <p class="text-gray-700 mb-4">Tem certeza que deseja excluir este membro? Esta ação não pode ser desfeita.</p>
+      <div class="flex justify-end space-x-3">
+        <button onclick="closeDeleteModal()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition">Cancelar</button>
+        <button id="confirmDeleteButton" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Alerta -->
+  <div id="alertModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg max-w-sm w-full mx-4 shadow-2xl">
+      <h3 id="alertTitle" class="text-lg font-bold mb-3"></h3>
+      <p id="alertMessage" class="text-gray-700 mb-4"></p>
+      <div class="flex justify-end">
+        <button onclick="closeAlertModal()" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition">OK</button>
+      </div>
     </div>
   </div>
 
   <script type="module">
-    import { GroupManager } from './js/group-manager.js';
-    import { showAlert } from './js/utils.js';
-    import { supabase } from './js/supabase.js';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
 
-    const groupManager = new GroupManager();
+    const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnYXJjY3BybXZncXN2aXZuZXJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTE2NTQ1OSwiZXhwIjoyMDc0NzQxNDU5fQ.CIZo0X0ua2teiR4zfUJnSA1WfOP_HFzDZPA0dBjsGtY';
+    
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    let currentGroup = null;
+    let currentMembers = [];
+    let memberToDelete = null;
+    let editingMemberId = null;
 
-    async function displayGroupInfo(group) {
-        document.getElementById('group-info').innerHTML = `
-            <div class="p-4 border rounded bg-gray-50">
-                <p><strong>Nome:</strong> ${group.group_name || ''}</p>
-                <p><strong>Representante:</strong> ${group.representative || ''}</p>
-                <p><strong>Email:</strong> ${group.email || ''}</p>
-                <p><strong>Telefone:</strong> ${group.phone || ''}</p>
-            </div>
-        `;
-    }
-
-    function displayMembers(members) {
-        const membersList = document.getElementById('members-list');
-        membersList.innerHTML = '';
-        
-        if (members && members.length > 0) {
-            members.forEach(member => {
-                const card = document.createElement('div');
-                card.className = 'p-4 border rounded bg-white';
-                card.innerHTML = `
-                    <p><strong>Nome:</strong> ${member.name}</p>
-                    <p><strong>CPF:</strong> ${member.cpf}</p>
-                    <p><strong>Email:</strong> ${member.email || ''}</p>
-                    <p><strong>Telefone:</strong> ${member.phone}</p>
-                    <p><strong>Gênero:</strong> ${member.gender}</p>
-                    <p><strong>Etnia:</strong> ${member.ethnicity || ''}</p>
-                    <p><strong>Escolaridade:</strong> ${member.education || ''}</p>
-                    <p><strong>Função no Grupo:</strong> ${member.role}</p>
-                    <p><strong>Produtos:</strong> ${member.products || ''}</p>
-                    <p><strong>Matérias-primas:</strong> ${member.rawMaterials || ''}</p>
-                    <p><strong>Renda Média:</strong> ${member.monthlyIncome || ''}</p>
-                `;
-                membersList.appendChild(card);
-            });
-        } else {
-            membersList.innerHTML = '<p class="text-gray-500">Nenhum membro cadastrado.</p>';
-        }
-    }
-
-    async function initialize() {
-        try {
-            const initialized = await groupManager.initialize();
-            if (!initialized) return;
-
-            const data = await groupManager.loadExistingGroup();
-            if (!data) {
-                showAlert('Nenhum grupo cadastrado.', 'warning');
-                window.location.href = 'cadastro.html';
-                return;
-            }
-
-            const { group, members } = data;
-            displayGroupInfo(group);
-            displayMembers(members);
-
-            document.getElementById('editButton').onclick = () => {
-                window.location.href = `cadastro.html?editId=${group.id}`;
-            };
-        } catch (error) {
-            console.error('Error initializing view:', error);
-            showAlert('Erro ao carregar dados', 'error');
-        }
-    }
-
-    // Setup event listeners
-    document.getElementById('logoutButton').onclick = async () => {
-        await supabase.auth.signOut();
-        window.location.href = 'index.html';
+    // Funções de Utilidade
+    window.closeDeleteModal = function() {
+      document.getElementById('deleteModal').classList.add('hidden');
+      document.getElementById('deleteModal').classList.remove('flex');
+      memberToDelete = null;
     };
 
-    // Initialize the page
-    initialize();
+    window.closeAlertModal = function() {
+      document.getElementById('alertModal').classList.add('hidden');
+      document.getElementById('alertModal').classList.remove('flex');
+    };
+
+    function showAlert(title, message, type = 'info') {
+      const modal = document.getElementById('alertModal');
+      const titleEl = document.getElementById('alertTitle');
+      const messageEl = document.getElementById('alertMessage');
+      
+      titleEl.textContent = title;
+      messageEl.textContent = message;
+      
+      const colors = {
+        success: 'text-green-600',
+        error: 'text-red-600',
+        warning: 'text-yellow-600',
+        info: 'text-blue-600'
+      };
+      
+      titleEl.className = `text-lg font-bold mb-3 ${colors[type] || colors.info}`;
+      
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+    }
+
+    // Exibir informações do grupo
+    function displayGroupInfo(group) {
+      const container = document.getElementById('group-details');
+      container.innerHTML = `
+        <div>
+          <label class="text-xs font-medium text-gray-600">Nome do Grupo</label>
+          <div class="field-display">${group.group_name || 'N/A'}</div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Representante</label>
+          <div class="field-display">${group.representative || 'N/A'}</div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Email</label>
+          <div class="field-display">${group.email || 'N/A'}</div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Telefone</label>
+          <div class="field-display">${group.phone || 'N/A'}</div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Possui Sede Própria</label>
+          <div class="field-display">${group.has_headquarters ? 'Sim' : 'Não'}</div>
+        </div>
+      `;
+    }
+
+    // Exibir membros
+    function displayMembers(members) {
+      const membersList = document.getElementById('members-list');
+      const memberCount = document.getElementById('member-count');
+      
+      memberCount.textContent = members.length;
+      membersList.innerHTML = '';
+      
+      if (members.length === 0) {
+        membersList.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum membro cadastrado ainda.</p>';
+        return;
+      }
+
+      members.forEach((member, index) => {
+        const card = createMemberCard(member, index);
+        membersList.appendChild(card);
+      });
+    }
+
+    // Criar card de membro
+    function createMemberCard(member, index) {
+      const card = document.createElement('div');
+      card.className = 'bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition';
+      card.id = `member-${member.id}`;
+      
+      card.innerHTML = `
+        <div class="flex justify-between items-start mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Membro ${index + 1}</h3>
+          <div class="flex space-x-2">
+            <button onclick="toggleEditMode(${member.id})" class="btn-edit text-white p-2 rounded-md" title="Editar">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </button>
+            <button onclick="confirmDeleteMember(${member.id})" class="btn-delete text-white p-2 rounded-md" title="Excluir">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <div id="member-view-${member.id}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          ${createFieldDisplay('Nome Completo', member.member_name)}
+          ${createFieldDisplay('Data de Nascimento', formatDate(member.member_birth_date))}
+          ${createFieldDisplay('Nome da Mãe', member.member_mothers_name)}
+          ${createFieldDisplay('Endereço', member.member_address)}
+          ${createFieldDisplay('CEP', member.member_cep)}
+          ${createFieldDisplay('Celular', member.member_phone)}
+          ${createFieldDisplay('Email', member.member_email)}
+          ${createFieldDisplay('RG', member.member_rg)}
+          ${createFieldDisplay('CPF', member.member_cpf)}
+          ${createFieldDisplay('MEI/CNPJ', member.member_cnpj || 'N/A')}
+          ${createFieldDisplay('Gênero', member.member_gender)}
+          ${createFieldDisplay('Etnia', member.member_ethnicity)}
+          ${createFieldDisplay('Escolaridade', member.member_education)}
+          ${createFieldDisplay('Pessoas na Casa', member.member_household_size)}
+          ${createFieldDisplay('Função no Grupo', member.member_role)}
+          ${createFieldDisplay('Produtos/Serviços', member.member_products)}
+          ${createFieldDisplay('Matérias-Primas', member.member_raw_materials)}
+          ${createFieldDisplay('Renda Mensal', member.member_monthly_income)}
+          ${createFieldDisplay('Envolvimento EcoSol', member.member_solidarity_involvement)}
+          ${createFieldDisplay('Outra Atividade', member.member_other_activity_toggle)}
+          ${member.member_other_activity_toggle === 'Sim' ? createFieldDisplay('Qual Atividade', member.member_other_activity) : ''}
+        </div>
+        
+        <div id="member-edit-${member.id}" class="hidden">
+          ${createEditForm(member)}
+        </div>
+      `;
+      
+      return card;
+    }
+
+    function createFieldDisplay(label, value) {
+      return `
+        <div>
+          <label class="text-xs font-medium text-gray-600">${label}</label>
+          <div class="field-display text-sm">${value || 'N/A'}</div>
+        </div>
+      `;
+    }
+
+    function createEditForm(member) {
+      return `
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="text-xs font-medium text-gray-700">Nome Completo</label>
+            <input type="text" id="edit-name-${member.id}" value="${member.member_name || ''}" class="field-edit text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">Data de Nascimento</label>
+            <input type="date" id="edit-birthdate-${member.id}" value="${member.member_birth_date || ''}" class="field-edit text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">Nome da Mãe</label>
+            <input type="text" id="edit-mother-${member.id}" value="${member.member_mothers_name || ''}" class="field-edit text-sm">
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-xs font-medium text-gray-700">Endereço</label>
+            <input type="text" id="edit-address-${member.id}" value="${member.member_address || ''}" class="field-edit text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">CEP</label>
+            <input type="text" id="edit-cep-${member.id}" value="${member.member_cep || ''}" class="field-edit text-sm" maxlength="9">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">Celular</label>
+            <input type="text" id="edit-phone-${member.id}" value="${member.member_phone || ''}" class="field-edit text-sm" maxlength="15">
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-xs font-medium text-gray-700">Email</label>
+            <input type="email" id="edit-email-${member.id}" value="${member.member_email || ''}" class="field-edit text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">RG</label>
+            <input type="text" id="edit-rg-${member.id}" value="${member.member_rg || ''}" class="field-edit text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">CPF</label>
+            <input type="text" id="edit-cpf-${member.id}" value="${member.member_cpf || ''}" class="field-edit text-sm" maxlength="14">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">MEI/CNPJ</label>
+            <input type="text" id="edit-cnpj-${member.id}" value="${member.member_cnpj || ''}" class="field-edit text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">Gênero</label>
+            <select id="edit-gender-${member.id}" class="field-edit text-sm">
+              <option value="Mulher cisgênero" ${member.member_gender === 'Mulher cisgênero' ? 'selected' : ''}>Mulher cisgênero</option>
+              <option value="Homem cisgênero" ${member.member_gender === 'Homem cisgênero' ? 'selected' : ''}>Homem cisgênero</option>
+              <option value="Mulher transgênero" ${member.member_gender === 'Mulher transgênero' ? 'selected' : ''}>Mulher transgênero</option>
+              <option value="Homem transgênero" ${member.member_gender === 'Homem transgênero' ? 'selected' : ''}>Homem transgênero</option>
+              <option value="Não-Binário" ${member.member_gender === 'Não-Binário' ? 'selected' : ''}>Não-Binário</option>
+              <option value="Outro" ${member.member_gender === 'Outro' ? 'selected' : ''}>Outro</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">Etnia/Cor</label>
+            <select id="edit-ethnicity-${member.id}" class="field-edit text-sm">
+              <option value="Branca" ${member.member_ethnicity === 'Branca' ? 'selected' : ''}>Branca</option>
+              <option value="Preta" ${member.member_ethnicity === 'Preta' ? 'selected' : ''}>Preta</option>
+              <option value="Parda" ${member.member_ethnicity === 'Parda' ? 'selected' : ''}>Parda</option>
+              <option value="Amarela" ${member.member_ethnicity === 'Amarela' ? 'selected' : ''}>Amarela</option>
+              <option value="Indígena" ${member.member_ethnicity === 'Indígena' ? 'selected' : ''}>Indígena</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">Escolaridade</label>
+            <select id="edit-education-${member.id}" class="field-edit text-sm">
+              <option value="Analfabeto" ${member.member_education === 'Analfabeto' ? 'selected' : ''}>Analfabeto</option>
+              <option value="Ensino Fundamental Incompleto" ${member.member_education === 'Ensino Fundamental Incompleto' ? 'selected' : ''}>Fundamental Incompleto</option>
+              <option value="Ensino Fundamental Completo" ${member.member_education === 'Ensino Fundamental Completo' ? 'selected' : ''}>Fundamental Completo</option>
+              <option value="Ensino Médio Incompleto" ${member.member_education === 'Ensino Médio Incompleto' ? 'selected' : ''}>Médio Incompleto</option>
+              <option value="Ensino Médio Completo" ${member.member_education === 'Ensino Médio Completo' ? 'selected' : ''}>Médio Completo</option>
+              <option value="Ensino Superior Incompleto" ${member.member_education === 'Ensino Superior Incompleto' ? 'selected' : ''}>Superior Incompleto</option>
+              <option value="Ensino Superior Completo" ${member.member_education === 'Ensino Superior Completo' ? 'selected' : ''}>Superior Completo</option>
+              <option value="Pós-graduação/Mestrado/Doutorado" ${member.member_education === 'Pós-graduação/Mestrado/Doutorado' ? 'selected' : ''}>Pós-graduação ou mais</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">Pessoas na Casa</label>
+            <input type="number" id="edit-household-${member.id}" value="${member.member_household_size || ''}" class="field-edit text-sm" min="1">
+          </div>
+          <div class="lg:col-span-3">
+            <label class="text-xs font-medium text-gray-700">Função no Grupo</label>
+            <input type="text" id="edit-role-${member.id}" value="${member.member_role || ''}" class="field-edit text-sm">
+          </div>
+          <div class="lg:col-span-3">
+            <label class="text-xs font-medium text-gray-700">Produtos/Serviços</label>
+            <input type="text" id="edit-products-${member.id}" value="${member.member_products || ''}" class="field-edit text-sm">
+          </div>
+          <div class="lg:col-span-3">
+            <label class="text-xs font-medium text-gray-700">Matérias-Primas</label>
+            <input type="text" id="edit-materials-${member.id}" value="${member.member_raw_materials || ''}" class="field-edit text-sm">
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-xs font-medium text-gray-700">Renda Média Mensal</label>
+            <select id="edit-income-${member.id}" class="field-edit text-sm">
+              <option value="Ate 1 SM" ${member.member_monthly_income === 'Ate 1 SM' ? 'selected' : ''}>Até 1 SM</option>
+              <option value="Mais de 1 SM ate 2 SM" ${member.member_monthly_income === 'Mais de 1 SM ate 2 SM' ? 'selected' : ''}>Mais de 1 SM até 2 SM</option>
+              <option value="Mais de 2 SM ate 3 SM" ${member.member_monthly_income === 'Mais de 2 SM ate 3 SM' ? 'selected' : ''}>Mais de 2 SM até 3 SM</option>
+              <option value="Mais de 3 SM ate 5 SM" ${member.member_monthly_income === 'Mais de 3 SM ate 5 SM' ? 'selected' : ''}>Mais de 3 SM até 5 SM</option>
+              <option value="Acima de 5 SM" ${member.member_monthly_income === 'Acima de 5 SM' ? 'selected' : ''}>Acima de 5 SM</option>
+            </select>
+          </div>
+          <div class="lg:col-span-3">
+            <label class="text-xs font-medium text-gray-700">Envolvimento com Economia Solidária</label>
+            <input type="text" id="edit-involvement-${member.id}" value="${member.member_solidarity_involvement || ''}" class="field-edit text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-gray-700">Outra Atividade</label>
+            <select id="edit-other-toggle-${member.id}" class="field-edit text-sm">
+              <option value="Sim" ${member.member_other_activity_toggle === 'Sim' ? 'selected' : ''}>Sim</option>
+              <option value="Não" ${member.member_other_activity_toggle === 'Não' ? 'selected' : ''}>Não</option>
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-xs font-medium text-gray-700">Qual Atividade</label>
+            <input type="text" id="edit-other-activity-${member.id}" value="${member.member_other_activity || ''}" class="field-edit text-sm">
+          </div>
+        </div>
+        <div class="flex justify-end space-x-3 pt-4 border-t">
+          <button onclick="cancelEdit(${member.id})" class="btn-cancel text-white px-6 py-2 rounded-md font-semibold">Cancelar</button>
+          <button onclick="saveMemberEdit(${member.id})" class="btn-save text-white px-6 py-2 rounded-md font-semibold">Salvar Alterações</button>
+        </div>
+      `;
+    }
+
+    // Alternar modo de edição
+    window.toggleEditMode = function(memberId) {
+      const viewDiv = document.getElementById(`member-view-${memberId}`);
+      const editDiv = document.getElementById(`member-edit-${memberId}`);
+      
+      if (editingMemberId && editingMemberId !== memberId) {
+        cancelEdit(editingMemberId);
+      }
+      
+      viewDiv.classList.add('hidden');
+      editDiv.classList.remove('hidden');
+      editingMemberId = memberId;
+    };
+
+    // Cancelar edição
+    window.cancelEdit = function(memberId) {
+      const viewDiv = document.getElementById(`member-view-${memberId}`);
+      const editDiv = document.getElementById(`member-edit-${memberId}`);
+      
+      viewDiv.classList.remove('hidden');
+      editDiv.classList.add('hidden');
+      editingMemberId = null;
+    };
+
+    // Salvar edição do membro
+    window.saveMemberEdit = async function(memberId) {
+      try {
+        const updatedData = {
+          member_name: document.getElementById(`edit-name-${memberId}`).value,
+          member_birth_date: document.getElementById(`edit-birthdate-${memberId}`).value,
+          member_mothers_name: document.getElementById(`edit-mother-${memberId}`).value,
+          member_address: document.getElementById(`edit-address-${memberId}`).value,
+          member_cep: document.getElementById(`edit-cep-${memberId}`).value,
+          member_phone: document.getElementById(`edit-phone-${memberId}`).value,
+          member_email: document.getElementById(`edit-email-${memberId}`).value,
+          member_rg: document.getElementById(`edit-rg-${memberId}`).value,
+          member_cpf: document.getElementById(`edit-cpf-${memberId}`).value,
+          member_cnpj: document.getElementById(`edit-cnpj-${memberId}`).value,
+          member_gender: document.getElementById(`edit-gender-${memberId}`).value,
+          member_ethnicity: document.getElementById(`edit-ethnicity-${memberId}`).value,
+          member_education: document.getElementById(`edit-education-${memberId}`).value,
+          member_household_size: parseInt(document.getElementById(`edit-household-${memberId}`).value),
+          member_role: document.getElementById(`edit-role-${memberId}`).value,
+          member_products: document.getElementById(`edit-products-${memberId}`).value,
+          member_raw_materials: document.getElementById(`edit-materials-${memberId}`).value,
+          member_monthly_income: document.getElementById(`edit-income-${memberId}`).value,
+          member_solidarity_involvement: document.getElementById(`edit-involvement-${memberId}`).value,
+          member_other_activity_toggle: document.getElementById(`edit-other-toggle-${memberId}`).value,
+          member_other_activity: document.getElementById(`edit-other-activity-${memberId}`).value
+        };
+
+        const { error } = await supabase
+          .from('members')
+          .update(updatedData)
+          .eq('id', memberId);
+
+        if (error) throw error;
+
+        showAlert('Sucesso', 'Membro atualizado com sucesso!', 'success');
+        
+        // Recarregar os dados
+        await loadGroupData();
+      } catch (error) {
+        console.error('Erro ao atualizar membro:', error);
+        showAlert('Erro', `Erro ao atualizar membro: ${error.message}`, 'error');
+      }
+    };
+
+    // Confirmar exclusão de membro
+    window.confirmDeleteMember = function(memberId) {
+      memberToDelete = memberId;
+      const modal = document.getElementById('deleteModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    };
+
+    // Excluir membro
+    document.getElementById('confirmDeleteButton').addEventListener('click', async function() {
+      if (!memberToDelete) return;
+      
+      try {
+        const { error } = await supabase
+          .from('members')
+          .delete()
+          .eq('id', memberToDelete);
+
+        if (error) throw error;
+
+        showAlert('Sucesso', 'Membro excluído com sucesso!', 'success');
+        closeDeleteModal();
+        
+        // Recarregar os dados
+        await loadGroupData();
+      } catch (error) {
+        console.error('Erro ao excluir membro:', error);
+        showAlert('Erro', `Erro ao excluir membro: ${error.message}`, 'error');
+      }
+    });
+
+    // Carregar dados do grupo
+    async function loadGroupData() {
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        // Carregar grupo
+        const { data: group, error: groupError } = await supabase
+          .from('groups')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (groupError) throw groupError;
+
+        if (!group) {
+          showAlert('Aviso', 'Nenhum grupo cadastrado. Redirecionando...', 'warning');
+          setTimeout(() => {
+            window.location.href = 'cadastro.html';
+          }, 2000);
+          return;
+        }
+
+        currentGroup = group;
+        displayGroupInfo(group);
+
+        // Carregar membros
+        const { data: members, error: membersError } = await supabase
+          .from('members')
+          .select('*')
+          .eq('group_id', group.id)
+          .order('created_at', { ascending: true });
+
+        if (membersError) throw membersError;
+
+        currentMembers = members || [];
+        displayMembers(currentMembers);
+
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        showAlert('Erro', `Erro ao carregar dados: ${error.message}`, 'error');
+      }
+    }
+
+    // Event Listeners
+    document.getElementById('logoutButton').addEventListener('click', async function() {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+    });
+
+    document.getElementById('addMemberButton').addEventListener('click', function() {
+      window.location.href = 'cadastro.html';
+    });
+
+    // Inicializar
+    loadGroupData();
   </script>
 </body>
 </html>
