@@ -241,6 +241,28 @@
         const card = createMemberCard(member, index);
         membersList.appendChild(card);
       });
+
+      // Adicionar event listeners aos botões após criar os cards
+      setupMemberButtons();
+    }
+
+    // Configurar event listeners para os botões de membro
+    function setupMemberButtons() {
+      // Botões de edição
+      document.querySelectorAll('.btn-edit-member').forEach(button => {
+        button.addEventListener('click', function() {
+          const memberId = this.getAttribute('data-member-id');
+          toggleEditMode(memberId);
+        });
+      });
+
+      // Botões de exclusão
+      document.querySelectorAll('.btn-delete-member').forEach(button => {
+        button.addEventListener('click', function() {
+          const memberId = this.getAttribute('data-member-id');
+          confirmDeleteMember(memberId);
+        });
+      });
     }
 
     // Criar card de membro
@@ -593,5 +615,4 @@
     // Inicializar
     loadGroupData();
   </script>
-</body>
-</html>
+  
