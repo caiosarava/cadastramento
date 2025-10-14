@@ -145,7 +145,7 @@
     </div>
   </div>
 
-  <script type="module">
+ <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
 
     const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
@@ -262,6 +262,21 @@
           const memberId = this.getAttribute('data-member-id');
           confirmDeleteMember(memberId);
         });
+      });
+
+      // Botões de salvar edição (usando event delegation)
+      document.getElementById('members-list').addEventListener('click', function(e) {
+        if (e.target.closest('.btn-save-edit')) {
+          const button = e.target.closest('.btn-save-edit');
+          const memberId = button.getAttribute('data-member-id');
+          saveMemberEdit(memberId);
+        }
+        
+        if (e.target.closest('.btn-cancel-edit')) {
+          const button = e.target.closest('.btn-cancel-edit');
+          const memberId = button.getAttribute('data-member-id');
+          cancelEdit(memberId);
+        }
       });
     }
 
@@ -449,14 +464,14 @@
           </div>
         </div>
         <div class="flex justify-end space-x-3 pt-4 border-t">
-          <button onclick="cancelEdit(${member.id})" class="btn-cancel text-white px-6 py-2 rounded-md font-semibold">Cancelar</button>
-          <button onclick="saveMemberEdit(${member.id})" class="btn-save text-white px-6 py-2 rounded-md font-semibold">Salvar Alterações</button>
+          <button data-member-id="${member.id}" class="btn-cancel-edit btn-cancel text-white px-6 py-2 rounded-md font-semibold">Cancelar</button>
+          <button data-member-id="${member.id}" class="btn-save-edit btn-save text-white px-6 py-2 rounded-md font-semibold">Salvar Alterações</button>
         </div>
       `;
     }
 
     // Alternar modo de edição
-    window.toggleEditMode = function(memberId) {
+    function toggleEditMode(memberId) {
       const viewDiv = document.getElementById(`member-view-${memberId}`);
       const editDiv = document.getElementById(`member-edit-${memberId}`);
       
@@ -467,43 +482,53 @@
       viewDiv.classList.add('hidden');
       editDiv.classList.remove('hidden');
       editingMemberId = memberId;
-    };
+    }
 
     // Cancelar edição
-    window.cancelEdit = function(memberId) {
+    function cancelEdit(memberId) {
       const viewDiv = document.getElementById(`member-view-${memberId}`);
       const editDiv = document.getElementById(`member-edit-${memberId}`);
       
       viewDiv.classList.remove('hidden');
       editDiv.classList.add('hidden');
       editingMemberId = null;
-    };
+    }
 
     // Salvar edição do membro
-    window.saveMemberEdit = async function(memberId) {
+    async function saveMemberEdit(memberId) {
       try {
+        // Validar campos obrigatórios
+        const name = document.getElementById(`edit-name-${memberId}`).value.trim();
+        const birthDate = document.getElementById(`edit-birthdate-${memberId}`).value;
+        const mothersName = document.getElementById(`edit-mother-${memberId}`).value.trim();
+        
+        if (!name || !birthDate || !mothersName) {
+          showAlert('Erro', 'Por favor, preencha todos os campos obrigatórios.', 'error');
+          return;
+        }
+
         const updatedData = {
-          member_name: document.getElementById(`edit-name-${memberId}`).value,
-          member_birth_date: document.getElementById(`edit-birthdate-${memberId}`).value,
-          member_mothers_name: document.getElementById(`edit-mother-${memberId}`).value,
-          member_address: document.getElementById(`edit-address-${memberId}`).value,
-          member_cep: document.getElementById(`edit-cep-${memberId}`).value,
-          member_phone: document.getElementById(`edit-phone-${memberId}`).value,
-          member_email: document.getElementById(`edit-email-${memberId}`).value,
-          member_rg: document.getElementById(`edit-rg-${memberId}`).value,
-          member_cpf: document.getElementById(`edit-cpf-${memberId}`).value,
-          member_cnpj: document.getElementById(`edit-cnpj-${memberId}`).value,
+          member_name: name,
+          member_birth_date: birthDate,
+          member_mothers_name: mothersName,
+          member_address: document.getElementById(`edit-address-${memberId}`).value.trim(),
+          member_cep: document.getElementById(`edit-cep-${memberId}`).value.trim(),
+          member_phone: document.getElementById(`edit-phone-${memberId}`).value.trim(),
+          member_email: document.getElementById(`edit-email-${memberId}`).value.trim(),
+          member_rg: document.getElementById(`edit-rg-${memberId}`).value.trim(),
+          member_cpf: document.getElementById(`edit-cpf-${memberId}`).value.trim(),
+          member_cnpj: document.getElementById(`edit-cnpj-${memberId}`).value.trim(),
           member_gender: document.getElementById(`edit-gender-${memberId}`).value,
           member_ethnicity: document.getElementById(`edit-ethnicity-${memberId}`).value,
           member_education: document.getElementById(`edit-education-${memberId}`).value,
-          member_household_size: parseInt(document.getElementById(`edit-household-${memberId}`).value),
-          member_role: document.getElementById(`edit-role-${memberId}`).value,
-          member_products: document.getElementById(`edit-products-${memberId}`).value,
-          member_raw_materials: document.getElementById(`edit-materials-${memberId}`).value,
+          member_household_size: parseInt(document.getElementById(`edit-household-${memberId}`).value) || 1,
+          member_role: document.getElementById(`edit-role-${memberId}`).value.trim(),
+          member_products: document.getElementById(`edit-products-${memberId}`).value.trim(),
+          member_raw_materials: document.getElementById(`edit-materials-${memberId}`).value.trim(),
           member_monthly_income: document.getElementById(`edit-income-${memberId}`).value,
-          member_solidarity_involvement: document.getElementById(`edit-involvement-${memberId}`).value,
+          member_solidarity_involvement: document.getElementById(`edit-involvement-${memberId}`).value.trim(),
           member_other_activity_toggle: document.getElementById(`edit-other-toggle-${memberId}`).value,
-          member_other_activity: document.getElementById(`edit-other-activity-${memberId}`).value
+          member_other_activity: document.getElementById(`edit-other-activity-${memberId}`).value.trim()
         };
 
         const { error } = await supabase
@@ -521,15 +546,15 @@
         console.error('Erro ao atualizar membro:', error);
         showAlert('Erro', `Erro ao atualizar membro: ${error.message}`, 'error');
       }
-    };
+    }
 
     // Confirmar exclusão de membro
-    window.confirmDeleteMember = function(memberId) {
+    function confirmDeleteMember(memberId) {
       memberToDelete = memberId;
       const modal = document.getElementById('deleteModal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
-    };
+    }
 
     // Excluir membro
     document.getElementById('confirmDeleteButton').addEventListener('click', async function() {
