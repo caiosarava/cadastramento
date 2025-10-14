@@ -44,12 +44,6 @@
         <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Cadastro Anual - COMESOL</h1>
         <p class="text-sm text-gray-600 mb-6">Preencha as informações do grupo e, em seguida, adicione os dados de cada membro. Ao final, clique em Salvar Cadastro do Grupo para enviar o formulário.</p>
 
-        <!-- Informações do Aplicativo/Status -->
-        <div id="info-bar" class="text-xs mb-4 p-2 bg-gray-100 rounded-lg text-gray-500">
-            <p>Backend: <span class="font-mono">Supabase</span></p>
-            <p>Status de Conexão: <span id="db-status" class="font-semibold">Carregando...</span></p>
-        </div>
-
         <form id="solidarity-group-form" onsubmit="event.preventDefault(); saveGroupData();">
 
             <!-- SEÇÃO 1: DADOS DO GRUPO (Nenhum campo é required, mas deve ser salvo no Supabase) -->
@@ -819,13 +813,9 @@
     function initSupabase() {
         members = []; 
 
-        const dbStatus = document.getElementById('db-status');
-
         if (SUPABASE_ANON_KEY.includes("SUA_CHAVE_ANON_PUBLIC_AQUI")) {
             const errorMessage = "❌ ERRO FATAL: Configuração Supabase ausente. Preencha o placeholder SUPABASE_ANON_KEY no código-fonte.";
             console.error(errorMessage);
-            if(dbStatus) dbStatus.textContent = 'Configuração Ausente';
-            
             supabase = null; 
             updateMemberCountAndList(); 
             return;
@@ -834,15 +824,13 @@
         try {
             console.log(`[Supabase Debug] Conectando a URL: ${SUPABASE_URL}`);
             
-            // 1. Inicializa o cliente Supabase
+            // Inicializa o cliente Supabase
             supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            if(dbStatus) dbStatus.textContent = '✅ Conectado ao Supabase';
             updateMemberCountAndList(); 
 
         } catch (error) {
             console.error("Erro ao inicializar Supabase:", error);
-            customAlert("Erro no Supabase", `Falha ao iniciar o cliente: ${error.message}. Verifique sua URL e Chave Anon.`, true);
-            if(dbStatus) dbStatus.textContent = 'Erro na Inicialização';
+            customAlert("Erro de Conexão", "Ocorreu um erro ao conectar com o servidor. Por favor, tente novamente.", true);
             supabase = null;
             updateMemberCountAndList(); 
         }
