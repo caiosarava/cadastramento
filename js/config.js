@@ -8,17 +8,30 @@ export const config = {
         'representative',
         'email',
         'phone',
-        'city',
-        'state'
+        'has_headquarters'
     ],
 
     // Member form required fields
     memberRequiredFields: [
-        'name',
-        'cpf',
-        'phone',
-        'gender',
-        'role'
+        'member_name',
+        'member_birth_date',
+        'member_mothers_name',
+        'member_address',
+        'member_cep',
+        'member_phone',
+        'member_email',
+        'member_rg',
+        'member_cpf',
+        'member_gender',
+        'member_ethnicity',
+        'member_education',
+        'member_household_size',
+        'member_role',
+        'member_products',
+        'member_raw_materials',
+        'member_monthly_income',
+        'member_solidarity_involvement',
+        'member_other_activity_toggle'
     ],
 
     // Validation patterns
@@ -31,33 +44,65 @@ export const config = {
 
     // Form options
     options: {
-        gender: ['Masculino', 'Feminino', 'Não-binário', 'Prefiro não informar'],
-        ethnicity: ['Branco', 'Pardo', 'Preto', 'Amarelo', 'Indígena', 'Prefiro não informar'],
+        gender: [
+            'Mulher cisgênero',
+            'Homem cisgênero',
+            'Mulher transgênero',
+            'Homem transgênero',
+            'Não-Binário',
+            'Outro'
+        ],
+        ethnicity: [
+            'Branca',
+            'Preta',
+            'Parda',
+            'Amarela',
+            'Indígena'
+        ],
         education: [
-            'Fundamental Incompleto',
-            'Fundamental Completo',
-            'Médio Incompleto',
-            'Médio Completo',
-            'Superior Incompleto',
-            'Superior Completo',
-            'Pós-graduação'
+            'Analfabeto',
+            'Ensino Fundamental Incompleto',
+            'Ensino Fundamental Completo',
+            'Ensino Médio Incompleto',
+            'Ensino Médio Completo',
+            'Ensino Superior Incompleto',
+            'Ensino Superior Completo',
+            'Pós-graduação/Mestrado/Doutorado'
         ],
         monthlyIncome: [
-            'Até R$ 1.000',
-            'R$ 1.001 a R$ 2.000',
-            'R$ 2.001 a R$ 3.000',
-            'R$ 3.001 a R$ 4.000',
-            'R$ 4.001 a R$ 5.000',
-            'Acima de R$ 5.000'
+            'Ate 1 SM',
+            'Mais de 1 SM ate 2 SM',
+            'Mais de 2 SM ate 3 SM',
+            'Mais de 3 SM ate 5 SM',
+            'Acima de 5 SM'
         ],
         role: [
+            'Coordenador(a)',
+            'Produção',
+            'Financeiro',
+            'Vendas',
             'Artesão(ã)',
             'Costureiro(a)',
             'Cozinheiro(a)',
             'Produtor(a) Rural',
             'Administrador(a)',
-            'Vendedor(a)',
             'Outro'
-        ]
+        ],
+        yesNo: ['Sim', 'Não']
+    },
+
+    // Session storage keys
+    storageKeys: {
+        currentGroupId: 'currentGroupId',
+        tempMemberData: 'tempMemberData'
+    },
+
+    // Page routes
+    routes: {
+        login: 'login.html',
+        groupForm: 'cadastro-grupo.html',
+        memberForm: 'cadastro-membro.html',
+        visualization: 'visualizacao.html',
+        index: 'index.html'
     }
 };

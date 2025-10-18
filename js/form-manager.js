@@ -4,10 +4,16 @@ import { config } from './config.js';
 export class FormManager {
     constructor(formId) {
         this.form = document.getElementById(formId);
-        this.setupFormMasks();
+        if (!this.form) {
+            console.warn(`Form with id "${formId}" not found`);
+        } else {
+            this.setupFormMasks();
+        }
     }
 
     setupFormMasks() {
+        if (!this.form) return;
+
         const maskedInputs = {
             '[data-mask="cep"]': formatCEP,
             '[data-mask="cpf"]': formatCPF,
@@ -24,6 +30,8 @@ export class FormManager {
     }
 
     populateSelects() {
+        if (!this.form) return;
+
         Object.entries(config.options).forEach(([field, options]) => {
             const select = this.form.querySelector(`select[name="${field}"]`);
             if (select) {
@@ -36,6 +44,8 @@ export class FormManager {
     }
 
     getFormData() {
+        if (!this.form) return {};
+
         const formData = new FormData(this.form);
         const data = {};
         
@@ -67,6 +77,8 @@ export class FormManager {
     }
 
     fillFormData(data) {
+        if (!this.form) return;
+
         Object.entries(data).forEach(([key, value]) => {
             const field = this.form.elements[key];
             if (field) {
@@ -76,6 +88,59 @@ export class FormManager {
     }
 
     clearForm() {
+        if (!this.form) return;
         this.form.reset();
+    }
+
+    /**
+     * Valida um campo específico
+     * @param {string} fieldId - ID do campo a validar
+     * @param {object} options - Opções de validação
+     * @returns {boolean} True se válido, false caso contrário
+     */
+    validateField(fieldId, options = {}) {
+        const field = document.getElementById(fieldId);
+        if (!field) return false;
+
+        const value = field.value.trim();
+        
+        if (options.required && !value) {
+            field.setCustomValidity(`O campo é obrigatório`);
+            field.reportValidity();
+            return false;
+        }
+
+        if (options.pattern && value && !options.pattern.test(value)) {
+            field.setCustomValidity(`Formato inválido`);
+            field.reportValidity();
+            return false;
+        }
+
+        if (options.minLength && value.length < options.minLength) {
+            field.setCustomValidity(`Mínimo de ${options.minLength} caracteres`);
+            field.reportValidity();
+            return false;
+        }
+
+        field.setCustomValidity('');
+        return true;
+    }
+
+    /**
+     * Adiciona validação em tempo real a um campo
+     * @param {string} fieldId - ID do campo
+     * @param {object} options - Opções de validação
+     */
+    addRealtimeValidation(fieldId, options = {}) {
+        const field = document.getElementById(fieldId);
+        if (!field) return;
+
+        field.addEventListener('blur', () => {
+            this.validateField(fieldId, options);
+        });
+
+        field.addEventListener('input', () => {
+            field.setCustomValidity('');
+        });
     }
 }

@@ -5,19 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COMESOL - Sistema de Cadastramento</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="flex items-center justify-center min-h-screen p-4 bg-gray-100">
     <div class="text-center">
+        <div class="mb-8">
+            <h1 class="text-5xl font-bold text-green-700 mb-2">COMESOL</h1>
+            <p class="text-gray-600 text-lg">Sistema de Cadastro de Grupos de Economia Solidária</p>
+        </div>
+        
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-green-500 mx-auto mb-4"></div>
         <p class="text-gray-600">Carregando...</p>
     </div>
 
     <script type="module">
-        // Redireciona diretamente para a página de login
-        window.location.href = 'login.html';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
+
+        const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnYXJjY3BybXZncXN2aXZuZXJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTE2NTQ1OSwiZXhwIjoyMDc0NzQxNDU5fQ.CIZo0X0ua2teiR4zfUJnSA1WfOP_HFzDZPA0dBjsGtY';
+        
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function checkAuthAndRedirect() {
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                
+                if (error) throw error;
+                
+                if (!user) {
+                    // Não está autenticado, vai para login
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Está autenticado, verifica se tem grupo
+                const { data: group, error: groupError } = await supabase
+                    .from('groups')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+
+                if (groupError) throw groupError;
+
+                if (!group) {
+                    // Não tem grupo, vai para cadastro do grupo
+                    window.location.href = 'cadastro-grupo.html';
+                    return;
+                }
+
+                // Tem grupo, verifica se tem membros
+                const { data: members, error: membersError } = await supabase
+                    .from('members')
+                    .select('id')
+                    .eq('group_id', group.id)
+                    .limit(1);
+
+                if (membersError) throw membersError;
+
+                if (!members || members.length === 0) {
+                    // Tem grupo mas não tem membros, vai para cadastro de membros
+                    sessionStorage.setItem('currentGroupId', group.id);
+                    window.location.href = 'cadastro-membro.html';
+                } else {
+                    // Tem grupo e membros, vai para visualização
+                    window.location.href = 'visualizacao.html';
+                }
+            } catch (error) {
+                console.error('Erro ao verificar autenticação:', error);
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Executa a verificação ao carregar
+        checkAuthAndRedirect();
     </script>
 </body>
 </html>
