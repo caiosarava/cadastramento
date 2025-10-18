@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro do Grupo - COMESOL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+        }
+        .card {
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+        .btn-primary {
+            background-color: #48bb78;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #38a169;
+            transform: translateY(-1px);
+        }
+        .btn-primary:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container" class="min-h-screen p-4 sm:p-8 flex items-start justify-center">
+    <div class="w-full max-w-4xl bg-white rounded-xl card p-6 sm:p-10 my-8">
+        
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Cadastro do Grupo - COMESOL</h1>
+        <p class="text-sm text-gray-600 mb-6">Preencha as informações do grupo. Após salvar, você poderá cadastrar os membros.</p>
+
+        <form id="group-form" onsubmit="event.preventDefault(); saveGroupData();">
+
+            <!-- SEÇÃO: DADOS DO GRUPO -->
+            <section id="group-data-section" class="mb-8 p-6 bg-green-50 rounded-lg border border-green-200">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20h-5v-2a3 3 0 00-5.356-1.857M17 20v-2c0-.592-.323-1.137-.833-1.432m0 0a3.001 3.001 0 00-5.334 0M12 20v-2c0-.592-.323-1.137-.833-1.432M12 20v-2a3.001 3.001 0 00-5.334 0M4 18h5v2H4V18z"></path></svg>
+                    Informações do Grupo
+                </h2>
+                
+                <div class="mb-4">
+                    <label for="groupName" class="block text-sm font-medium text-gray-700">Nome do Grupo/Empreendimento <span class="text-red-500">*</span></label>
+                    <input type="text" id="groupName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="groupRepresentativeName" class="block text-sm font-medium text-gray-700">Nome do Representante <span class="text-red-500">*</span></label>
+                    <input type="text" id="groupRepresentativeName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                </div>
+
+                <div class="mb-4">
+                    <label for="groupContact" class="block text-sm font-medium text-gray-700">E-mail de Contato <span class="text-red-500">*</span></label>
+                    <input type="email" id="groupContact" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border" placeholder="exemplo@dominio.com">
+                </div>
+
+                <div class="mb-4">
+                    <label for="groupPhone" class="block text-sm font-medium text-gray-700">Telefone de Contato <span class="text-red-500">*</span></label>
+                    <input type="tel" id="groupPhone" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border" placeholder="(00) 00000-0000" maxlength="15">
+                </div>
+
+                <div class="mb-4">
+                    <label for="hasOwnHeadquarters" class="block text-sm font-medium text-gray-700">O grupo/empreendimento possui sede própria? <span class="text-red-500">*</span></label>
+                    <select id="hasOwnHeadquarters" required onchange="toggleHeadquartersAddress()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                        <option value="" disabled selected>Selecione</option>
+                        <option value="Não">Não</option>
+                        <option value="Sim">Sim</option>
+                    </select>
+                </div>
+                
+                <div id="headquartersAddressField" class="mb-4 hidden">
+                    <label for="headquartersAddress" class="block text-sm font-medium text-gray-700">Endereço da Sede Própria (Rua, Nº, Bairro, Cidade, Estado)</label>
+                    <input type="text" id="headquartersAddress" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                </div>
+                
+            </section>
+
+            <!-- BOTÕES E FEEDBACK -->
+            <div class="flex flex-col sm:flex-row justify-between items-center pt-6 border-t">
+                <button type="button" id="logoutButton" class="fixed top-4 right-4 z-50 bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition duration-200 shadow-lg flex items-center font-semibold">
+                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    Sair
+                </button>
+                
+                <p id="save-status" class="text-sm text-gray-600 mb-4 sm:mb-0">Preencha todos os campos obrigatórios.</p>
+                
+                <button type="submit" id="save-button" class="btn-primary text-white py-3 px-8 rounded-full font-bold shadow-lg hover:shadow-xl transition duration-200 flex items-center justify-center">
+                    <svg id="save-icon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-4 5l4-4m0 0l4 4m-4-4v12"></path></svg>
+                    Salvar e Cadastrar Membros
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Alerta -->
+<div id="custom-alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg max-w-sm w-full mx-4 shadow-2xl">
+        <h3 id="alert-title" class="text-lg font-bold mb-3 text-red-600">Alerta</h3>
+        <p id="alert-message" class="text-gray-700 mb-4"></p>
+        <div class="flex justify-end">
+            <button onclick="closeCustomAlert()" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition">Entendi</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
+
+    const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnYXJjY3BybXZncXN2aXZuZXJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTE2NTQ1OSwiZXhwIjoyMDc0NzQxNDU5fQ.CIZo0X0ua2teiR4zfUJnSA1WfOP_HFzDZPA0dBjsGtY';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Funções de utilidade
+    window.customAlert = customAlert;
+    window.closeCustomAlert = closeCustomAlert;
+    window.toggleHeadquartersAddress = toggleHeadquartersAddress;
+
+    function customAlert(title, message, isError = true) {
+        const modal = document.getElementById('custom-alert-modal');
+        const titleElement = document.getElementById('alert-title');
+        const messageElement = document.getElementById('alert-message');
+
+        if (!modal || !titleElement || !messageElement) return;
+
+        titleElement.textContent = title;
+        messageElement.textContent = message;
+        titleElement.className = isError ? 'text-lg font-bold mb-3 text-red-600' : 'text-lg font-bold mb-3 text-green-600';
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeCustomAlert() {
+        const modal = document.getElementById('custom-alert-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    function toggleHeadquartersAddress() {
+        const toggleElement = document.getElementById('hasOwnHeadquarters');
+        const fieldContainer = document.getElementById('headquartersAddressField');
+        const addressInput = document.getElementById('headquartersAddress');
+        
+        if (!toggleElement || !fieldContainer || !addressInput) return;
+
+        const hasHeadquarters = toggleElement.value === 'Sim';
+        
+        if (hasHeadquarters) {
+            fieldContainer.classList.remove('hidden');
+            addressInput.required = true;
+        } else {
+            fieldContainer.classList.add('hidden');
+            addressInput.required = false;
+            addressInput.value = '';
+        }
+    }
+
+    function setLoading(isLoading) {
+        const button = document.getElementById('save-button');
+        
+        if (!button) return;
+
+        button.disabled = isLoading;
+
+        if (isLoading) {
+            button.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Salvando...`;
+        } else {
+            button.innerHTML = `<svg id="save-icon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-4 5l4-4m0 0l4 4m-4-4v12"></path></svg> Salvar e Cadastrar Membros`;
+        }
+    }
+
+    function maskPhone(value) {
+        value = value.replace(/\D/g, "");
+        
+        if (value.length > 2) {
+            value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
+        }
+        
+        if (value.length > 10 && value.length <= 15) {
+             value = value.replace(/(\d{4,5})(\d)/, "$1-$2");
+        } else if (value.length > 9) {
+             value = value.replace(/(\d{4})(\d)/, "$1-$2");
+        }
+
+        return value.substring(0, 15);
+    }
+
+    async function saveGroupData() {
+        const getVal = (id) => document.getElementById(id)?.value.trim() || null;
+
+        const groupName = getVal('groupName');
+        const groupContact = getVal('groupContact');
+        const groupPhone = getVal('groupPhone');
+        const groupRepresentativeName = getVal('groupRepresentativeName');
+        const hasOwnHeadquarters = document.getElementById('hasOwnHeadquarters')?.value === 'Sim';
+        const headquartersAddress = (hasOwnHeadquarters && getVal('headquartersAddress')) ? getVal('headquartersAddress') : null;
+
+        if (!groupName || !groupContact || !groupPhone || !groupRepresentativeName) {
+            customAlert("Campos Obrigatórios", "Por favor, preencha todos os campos obrigatórios.", true);
+            return;
+        }
+
+        setLoading(true);
+        const saveStatus = document.getElementById('save-status');
+        if (saveStatus) saveStatus.textContent = 'Salvando dados do grupo...';
+
+        try {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                throw new Error('Usuário não está autenticado. Faça login novamente.');
+            }
+
+            // Verificar se já existe um grupo para este usuário
+            const { data: existingGroup, error: checkError } = await supabase
+                .from('groups')
+                .select('id')
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+            if (checkError) throw checkError;
+
+            const groupData = {
+                group_name: groupName,
+                representative: groupRepresentativeName,
+                email: groupContact,
+                phone: groupPhone,
+                has_headquarters: hasOwnHeadquarters,
+                headquarters_address: headquartersAddress,
+                user_id: user.id,
+            };
+
+            let groupId;
+
+            if (existingGroup) {
+                // Atualizar grupo existente
+                const { data: updatedGroup, error: updateError } = await supabase
+                    .from('groups')
+                    .update(groupData)
+                    .eq('id', existingGroup.id)
+                    .select('id')
+                    .single();
+
+                if (updateError) throw updateError;
+                groupId = updatedGroup.id;
+            } else {
+                // Inserir novo grupo
+                const { data: newGroup, error: insertError } = await supabase
+                    .from('groups')
+                    .insert([groupData])
+                    .select('id')
+                    .single();
+
+                if (insertError) throw insertError;
+                groupId = newGroup.id;
+            }
+
+            if (saveStatus) saveStatus.textContent = 'Grupo salvo com sucesso! Redirecionando...';
+            
+            // Armazenar o ID do grupo no sessionStorage para usar na próxima página
+            sessionStorage.setItem('currentGroupId', groupId);
+
+            setTimeout(() => {
+                window.location.href = 'cadastro-membro.html';
+            }, 1000);
+
+        } catch (error) {
+            console.error("Erro ao salvar dados do grupo:", error);
+            if (saveStatus) saveStatus.textContent = '❌ Erro ao salvar dados.';
+            customAlert(
+                "Erro ao Salvar", 
+                `Ocorreu um erro: ${error.message}`,
+                true
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // Configurar máscaras
+    function setupMasks() {
+        const groupPhoneInput = document.getElementById('groupPhone');
+        
+        if (groupPhoneInput) {
+            groupPhoneInput.addEventListener('input', (e) => {
+                e.target.value = maskPhone(e.target.value);
+            });
+        }
+    }
+
+    // Carregar dados existentes se houver
+    async function loadExistingGroup() {
+        try {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const { data: group, error: groupError } = await supabase
+                .from('groups')
+                .select('*')
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+            if (groupError) throw groupError;
+
+            if (group) {
+                document.getElementById('groupName').value = group.group_name || '';
+                document.getElementById('groupRepresentativeName').value = group.representative || '';
+                document.getElementById('groupContact').value = group.email || '';
+                document.getElementById('groupPhone').value = group.phone || '';
+                document.getElementById('hasOwnHeadquarters').value = group.has_headquarters ? 'Sim' : 'Não';
+                
+                if (group.has_headquarters && group.headquarters_address) {
+                    document.getElementById('headquartersAddress').value = group.headquarters_address;
+                    toggleHeadquartersAddress();
+                }
+
+                sessionStorage.setItem('currentGroupId', group.id);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar grupo:', error);
+        }
+    }
+
+    // Event listeners
+    document.getElementById('logoutButton')?.addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'index.html';
+    });
+
+    window.saveGroupData = saveGroupData;
+
+    // Inicializar
+    window.onload = function() {
+        setupMasks();
+        loadExistingGroup();
+    };
+</script>
+</body>
+</html>

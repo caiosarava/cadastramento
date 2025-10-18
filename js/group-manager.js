@@ -5,6 +5,7 @@ export class GroupManager {
     constructor() {
         this.members = [];
         this.user = null;
+        this.currentGroupId = null;
     }
 
     async initialize() {
@@ -26,6 +27,8 @@ export class GroupManager {
                 .maybeSingle();
 
             if (group) {
+                this.currentGroupId = group.id;
+                
                 // Converte boolean para "Sim"/"Não" ao carregar
                 const formattedGroup = {
                     ...group,
@@ -62,18 +65,40 @@ export class GroupManager {
                 updated_at: new Date().toISOString()
             };
 
-            console.log('Dados a serem salvos:', dataToSave); // Para debug
+            console.log('Dados a serem salvos:', dataToSave);
 
-            const { data: group, error } = await supabase
+            // Verifica se já existe um grupo
+            const { data: existingGroup } = await supabase
                 .from('groups')
-                .upsert(dataToSave)
-                .select()
-                .single();
+                .select('id')
+                .eq('user_id', this.user.id)
+                .maybeSingle();
 
-            if (error) {
-                console.error('Erro do Supabase:', error); // Para debug
-                throw error;
+            let group;
+            if (existingGroup) {
+                // Atualiza grupo existente
+                const { data, error } = await supabase
+                    .from('groups')
+                    .update(dataToSave)
+                    .eq('id', existingGroup.id)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                group = data;
+            } else {
+                // Insere novo grupo
+                const { data, error } = await supabase
+                    .from('groups')
+                    .insert([dataToSave])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                group = data;
             }
+
+            this.currentGroupId = group.id;
 
             // Converte o boolean de volta para "Sim"/"Não" para exibição
             return {
@@ -88,6 +113,10 @@ export class GroupManager {
 
     async saveMembers(groupId, members) {
         try {
+            if (!groupId) {
+                throw new Error('ID do grupo não fornecido');
+            }
+
             // Delete existing members
             await supabase
                 .from('members')
@@ -96,12 +125,34 @@ export class GroupManager {
 
             // Insert new members
             if (members.length > 0) {
+                const membersToInsert = members.map(member => ({
+                    group_id: groupId,
+                    member_name: member.member_name || member.name,
+                    member_birth_date: member.member_birth_date || member.birthDate,
+                    member_mothers_name: member.member_mothers_name || member.mothersName,
+                    member_address: member.member_address || member.address,
+                    member_cep: member.member_cep || member.cep,
+                    member_phone: member.member_phone || member.phone,
+                    member_email: member.member_email || member.email,
+                    member_rg: member.member_rg || member.rg,
+                    member_cpf: member.member_cpf || member.cpf,
+                    member_cnpj: member.member_cnpj || member.cnpj,
+                    member_education: member.member_education || member.education,
+                    member_gender: member.member_gender || member.gender,
+                    member_ethnicity: member.member_ethnicity || member.ethnicity,
+                    member_household_size: member.member_household_size || member.householdSize,
+                    member_role: member.member_role || member.memberRole,
+                    member_products: member.member_products || member.memberProducts,
+                    member_raw_materials: member.member_raw_materials || member.memberRawMaterials,
+                    member_monthly_income: member.member_monthly_income || member.monthlyIncome,
+                    member_solidarity_involvement: member.member_solidarity_involvement || member.solidarityInvolvement,
+                    member_other_activity_toggle: member.member_other_activity_toggle || member.otherActivityToggle,
+                    member_other_activity: member.member_other_activity || member.otherActivity,
+                }));
+
                 const { error } = await supabase
                     .from('members')
-                    .insert(members.map(member => ({
-                        ...member,
-                        group_id: groupId
-                    })));
+                    .insert(membersToInsert);
 
                 if (error) throw error;
             }
@@ -127,9 +178,7 @@ export class GroupManager {
             'group_name',
             'representative',
             'email',
-            'phone',
-            'city',
-            'state'
+            'phone'
         ];
 
         const missingFields = requiredFields.filter(field => !groupData[field]);
@@ -157,5 +206,20 @@ export class GroupManager {
         }
 
         return true;
+    }
+
+    getCurrentGroupId() {
+        // Tenta primeiro do sessionStorage, depois da instância
+        return sessionStorage.getItem('currentGroupId') || this.currentGroupId;
+    }
+
+    setCurrentGroupId(groupId) {
+        this.currentGroupId = groupId;
+        sessionStorage.setItem('currentGroupId', groupId);
+    }
+
+    clearCurrentGroupId() {
+        this.currentGroupId = null;
+        sessionStorage.removeItem('currentGroupId');
     }
 }

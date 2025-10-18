@@ -146,6 +146,7 @@
   </div>
 
  <script type="module">
+     import { NavigationHelper } from './js/navigation-helper.js';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
 
     const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
@@ -158,6 +159,7 @@
     let memberToDelete = null;
     let editingMemberId = null;
 
+   
     // Funções de Utilidade
     window.closeDeleteModal = function() {
       document.getElementById('deleteModal').classList.add('hidden');
@@ -639,6 +641,14 @@
 
     // Inicializar
     loadGroupData();
+
+     // Substituir o botão de logout por:
+    NavigationHelper.setupLogoutButton('logoutButton');
+
+    // Adicionar botão para voltar ao cadastro
+    document.getElementById('addMemberButton')?.addEventListener('click', function() {
+        NavigationHelper.goToMemberForm();
+    });
   </script>
 </body>
 </html> 

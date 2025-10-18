@@ -54,8 +54,8 @@ async function checkIfHasGroup(userId) {
             // Se já tem um grupo cadastrado, vai para visualização
             window.location.href = 'visualizacao.html';
         } else {
-            // Se não tem grupo, vai para o cadastro
-            window.location.href = 'cadastro.html';
+            // Se não tem grupo, vai para o cadastro do grupo
+            window.location.href = 'cadastro-grupo.html';
         }
     } catch (err) {
         console.error('Erro ao verificar grupo:', err);
@@ -121,8 +121,12 @@ async function redirectIfNotLoggedIn() {
 }
 
 // Event Listeners
-elements.authForm.addEventListener('submit', handleAuth);
-elements.toggleModeButton.addEventListener('click', toggleAuthMode);
+if (elements.authForm) {
+    elements.authForm.addEventListener('submit', handleAuth);
+}
+if (elements.toggleModeButton) {
+    elements.toggleModeButton.addEventListener('click', toggleAuthMode);
+}
 
 // Export functions
 export { redirectIfNotLoggedIn, checkIfHasGroup };

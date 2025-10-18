@@ -5,9 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COMESOL - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+        }
+        .card {
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+        .btn-primary {
+            background-color: #48bb78;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #38a169;
+        }
+        .btn-primary:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
     <div class="card bg-white p-8 md:p-10 rounded-xl w-full max-w-md">
@@ -40,14 +58,21 @@
         </form>
 
         <div class="mt-6 text-center">
-            <a href="registro.html" class="text-sm text-green-600 hover:text-green-800 transition duration-150">
-                Ainda não tem acesso? Crie sua conta
-            </a>
+            <button id="toggleModeButton" class="text-sm text-green-600 hover:text-green-800 transition duration-150">
+                Ainda não tem acesso? Cadastrar Novo Grupo
+            </button>
         </div>
     </div>
 
     <script type="module">
-        import { supabase } from './js/supabase.js';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
+
+        const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnYXJjY3BybXZncXN2aXZuZXJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTE2NTQ1OSwiZXhwIjoyMDc0NzQxNDU5fQ.CIZo0X0ua2teiR4zfUJnSA1WfOP_HFzDZPA0dBjsGtY';
+        
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentMode = 'login'; // 'login' ou 'signup'
 
         const elements = {
             form: document.getElementById('authForm'),
@@ -56,27 +81,65 @@
             button: document.getElementById('authButton'),
             loadingSpinner: document.getElementById('loadingSpinner'),
             buttonText: document.getElementById('buttonText'),
-            statusMessage: document.getElementById('statusMessage')
+            statusMessage: document.getElementById('statusMessage'),
+            formTitle: document.getElementById('formTitle'),
+            toggleButton: document.getElementById('toggleModeButton')
         };
 
         function displayStatus(message, className) {
             elements.statusMessage.textContent = message;
             elements.statusMessage.className = `p-3 mb-4 rounded-lg text-sm text-center ${className}`;
             elements.statusMessage.classList.remove('hidden');
+            
+            setTimeout(() => {
+                elements.statusMessage.classList.add('hidden');
+            }, 5000);
         }
 
         function setLoading(isLoading) {
             elements.button.disabled = isLoading;
             if (isLoading) {
-                elements.buttonText.textContent = 'Entrando...';
+                elements.buttonText.textContent = currentMode === 'login' ? 'Entrando...' : 'Cadastrando...';
                 elements.loadingSpinner.classList.remove('hidden');
             } else {
-                elements.buttonText.textContent = 'Entrar';
+                elements.buttonText.textContent = currentMode === 'login' ? 'Entrar' : 'Cadastrar Novo Grupo';
                 elements.loadingSpinner.classList.add('hidden');
             }
         }
 
-        async function handleLogin(e) {
+        function toggleAuthMode() {
+            currentMode = currentMode === 'login' ? 'signup' : 'login';
+            elements.formTitle.textContent = currentMode === 'login' ? 'Login' : 'Cadastro de Acesso';
+            elements.buttonText.textContent = currentMode === 'login' ? 'Entrar' : 'Cadastrar Novo Grupo';
+            elements.toggleButton.textContent = currentMode === 'login'
+                ? 'Ainda não tem acesso? Cadastrar Novo Grupo'
+                : 'Já tem acesso? Fazer Login';
+        }
+
+        async function checkIfHasGroup(userId) {
+            try {
+                const { data: groupData, error } = await supabase
+                    .from('groups')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                if (groupData) {
+                    // Se já tem um grupo cadastrado, vai para visualização
+                    window.location.href = 'visualizacao.html';
+                } else {
+                    // Se não tem grupo, vai para o cadastro do grupo
+                    window.location.href = 'cadastro-grupo.html';
+                }
+            } catch (err) {
+                console.error('Erro ao verificar grupo:', err);
+                displayStatus(`Erro ao verificar dados: ${err.message}`, 'bg-red-100 text-red-700');
+            }
+        }
+
+        async function handleAuth(e) {
             e.preventDefault();
 
             const email = elements.email.value.trim();
@@ -90,37 +153,48 @@
             setLoading(true);
 
             try {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
+                let response;
+                if (currentMode === 'signup') {
+                    response = await supabase.auth.signUp({ email, password });
+                } else {
+                    response = await supabase.auth.signInWithPassword({ email, password });
+                }
 
+                const { data, error } = response;
                 if (error) throw error;
 
                 if (data.user) {
-                    // Verifica se o usuário já tem um grupo cadastrado
-                    const { data: groupData, error: groupError } = await supabase
-                        .from('groups')
-                        .select('id')
-                        .eq('user_id', data.user.id)
-                        .maybeSingle();
-
-                    if (groupError) throw groupError;
-
-                    if (groupData) {
-                        window.location.href = 'visualizacao.html';
+                    if (currentMode === 'signup') {
+                        displayStatus('Conta criada! Verifique seu email para confirmar.', 'bg-blue-100 text-blue-700');
+                        setTimeout(() => {
+                            currentMode = 'login';
+                            toggleAuthMode();
+                            setLoading(false);
+                        }, 3000);
                     } else {
-                        window.location.href = 'cadastro.html';
+                        checkIfHasGroup(data.user.id);
                     }
+                } else {
+                    displayStatus('Verifique seu email para confirmar o cadastro.', 'bg-blue-100 text-blue-700');
+                    setLoading(false);
                 }
             } catch (error) {
-                console.error('Erro no login:', error);
-                displayStatus(`Erro ao fazer login: ${error.message}`, 'bg-red-100 text-red-700');
+                console.error('Erro de autenticação:', error);
+                displayStatus(`❌ Erro: ${error.message}`, 'bg-red-100 text-red-700');
                 setLoading(false);
             }
         }
 
-        elements.form.addEventListener('submit', handleLogin);
+        elements.form.addEventListener('submit', handleAuth);
+        elements.toggleButton.addEventListener('click', toggleAuthMode);
+
+        // Verifica se já está autenticado
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                checkIfHasGroup(user.id);
+            }
+        });
     </script>
 </body>
 </html>
