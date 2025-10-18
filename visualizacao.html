@@ -88,14 +88,61 @@
 
       <!-- Informações do Grupo -->
       <section id="group-info" class="mb-8 p-6 bg-green-50 rounded-lg border border-green-200">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-          <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20h-5v-2a3 3 0 00-5.356-1.857M17 20v-2c0-.592-.323-1.137-.833-1.432m0 0a3.001 3.001 0 00-5.334 0M12 20v-2c0-.592-.323-1.137-.833-1.432M12 20v-2a3.001 3.001 0 00-5.334 0M4 18h5v2H4V18z"></path>
-          </svg>
-          Informações do Grupo
-        </h2>
-        <div id="group-details" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-gray-700 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20h-5v-2a3 3 0 00-5.356-1.857M17 20v-2c0-.592-.323-1.137-.833-1.432m0 0a3.001 3.001 0 00-5.334 0M12 20v-2c0-.592-.323-1.137-.833-1.432M12 20v-2a3.001 3.001 0 00-5.334 0M4 18h5v2H4V18z"></path>
+            </svg>
+            Informações do Grupo
+          </h2>
+          <button id="editGroupButton" class="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 flex items-center text-sm font-semibold">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Editar Grupo
+          </button>
+        </div>
+        
+        <!-- Visualização dos dados do grupo -->
+        <div id="group-view" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Dados do grupo serão inseridos aqui -->
+        </div>
+        
+        <!-- Formulário de edição do grupo (inicialmente oculto) -->
+        <div id="group-edit" class="hidden">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="text-xs font-medium text-gray-700">Nome do Grupo/Empreendimento</label>
+              <input type="text" id="edit-group-name" class="field-edit text-sm">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-700">Nome do Representante</label>
+              <input type="text" id="edit-group-representative" class="field-edit text-sm">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-700">Email de Contato</label>
+              <input type="email" id="edit-group-email" class="field-edit text-sm">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-700">Telefone de Contato</label>
+              <input type="tel" id="edit-group-phone" maxlength="15" class="field-edit text-sm">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-700">Possui Sede Própria</label>
+              <select id="edit-group-headquarters" class="field-edit text-sm" onchange="toggleGroupHeadquartersAddress()">
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
+            </div>
+            <div id="edit-group-headquarters-address-field" class="hidden">
+              <label class="text-xs font-medium text-gray-700">Endereço da Sede</label>
+              <input type="text" id="edit-group-headquarters-address" class="field-edit text-sm">
+            </div>
+          </div>
+          <div class="flex justify-end space-x-3 pt-4 border-t">
+            <button onclick="cancelGroupEdit()" class="btn-cancel text-white px-6 py-2 rounded-md font-semibold">Cancelar</button>
+            <button onclick="saveGroupEdit()" class="btn-save text-white px-6 py-2 rounded-md font-semibold">Salvar Alterações</button>
+          </div>
         </div>
       </section>
 
@@ -146,7 +193,7 @@
   </div>
 
  <script type="module">
-     import { NavigationHelper } from './js/navigation-helper.js';
+    import { NavigationHelper } from './js/navigation-helper.js';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
 
     const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
@@ -158,8 +205,8 @@
     let currentMembers = [];
     let memberToDelete = null;
     let editingMemberId = null;
+    let isEditingGroup = false;
 
-   
     // Funções de Utilidade
     window.closeDeleteModal = function() {
       document.getElementById('deleteModal').classList.add('hidden');
@@ -171,6 +218,10 @@
       document.getElementById('alertModal').classList.add('hidden');
       document.getElementById('alertModal').classList.remove('flex');
     };
+    
+    window.toggleGroupHeadquartersAddress = toggleGroupHeadquartersAddress;
+    window.cancelGroupEdit = cancelGroupEdit;
+    window.saveGroupEdit = saveGroupEdit;
 
     function showAlert(title, message, type = 'info') {
       const modal = document.getElementById('alertModal');
@@ -199,9 +250,25 @@
       return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
     }
 
+    function maskPhone(value) {
+      value = value.replace(/\D/g, "");
+      
+      if (value.length > 2) {
+        value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
+      }
+      
+      if (value.length > 10 && value.length <= 15) {
+        value = value.replace(/(\d{4,5})(\d)/, "$1-$2");
+      } else if (value.length > 9) {
+        value = value.replace(/(\d{4})(\d)/, "$1-$2");
+      }
+
+      return value.substring(0, 15);
+    }
+
     // Exibir informações do grupo
     function displayGroupInfo(group) {
-      const container = document.getElementById('group-details');
+      const container = document.getElementById('group-view');
       container.innerHTML = `
         <div>
           <label class="text-xs font-medium text-gray-600">Nome do Grupo</label>
@@ -223,7 +290,136 @@
           <label class="text-xs font-medium text-gray-600">Possui Sede Própria</label>
           <div class="field-display">${group.has_headquarters ? 'Sim' : 'Não'}</div>
         </div>
+        ${group.has_headquarters && group.headquarters_address ? `
+        <div class="md:col-span-2">
+          <label class="text-xs font-medium text-gray-600">Endereço da Sede</label>
+          <div class="field-display">${group.headquarters_address}</div>
+        </div>
+        ` : ''}
       `;
+    }
+
+    // Alternar modo de edição do grupo
+    function toggleGroupEdit() {
+      const viewDiv = document.getElementById('group-view');
+      const editDiv = document.getElementById('group-edit');
+      const editButton = document.getElementById('editGroupButton');
+      
+      if (isEditingGroup) {
+        // Voltar para modo visualização
+        viewDiv.classList.remove('hidden');
+        editDiv.classList.add('hidden');
+        editButton.innerHTML = `
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          Editar Grupo
+        `;
+        isEditingGroup = false;
+      } else {
+        // Entrar em modo edição
+        viewDiv.classList.add('hidden');
+        editDiv.classList.remove('hidden');
+        editButton.innerHTML = `
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          Cancelar
+        `;
+        isEditingGroup = true;
+        
+        // Preencher formulário com dados atuais
+        fillGroupEditForm();
+      }
+    }
+
+    // Preencher formulário de edição com dados do grupo
+    function fillGroupEditForm() {
+      if (!currentGroup) return;
+      
+      document.getElementById('edit-group-name').value = currentGroup.group_name || '';
+      document.getElementById('edit-group-representative').value = currentGroup.representative || '';
+      document.getElementById('edit-group-email').value = currentGroup.email || '';
+      document.getElementById('edit-group-phone').value = currentGroup.phone || '';
+      document.getElementById('edit-group-headquarters').value = currentGroup.has_headquarters ? 'true' : 'false';
+      
+      if (currentGroup.has_headquarters && currentGroup.headquarters_address) {
+        document.getElementById('edit-group-headquarters-address').value = currentGroup.headquarters_address;
+        document.getElementById('edit-group-headquarters-address-field').classList.remove('hidden');
+      } else {
+        document.getElementById('edit-group-headquarters-address-field').classList.add('hidden');
+      }
+      
+      // Configurar máscara de telefone
+      const phoneInput = document.getElementById('edit-group-phone');
+      phoneInput.addEventListener('input', (e) => {
+        e.target.value = maskPhone(e.target.value);
+      });
+    }
+
+    // Alternar campo de endereço da sede
+    function toggleGroupHeadquartersAddress() {
+      const hasHeadquarters = document.getElementById('edit-group-headquarters').value === 'true';
+      const addressField = document.getElementById('edit-group-headquarters-address-field');
+      const addressInput = document.getElementById('edit-group-headquarters-address');
+      
+      if (hasHeadquarters) {
+        addressField.classList.remove('hidden');
+      } else {
+        addressField.classList.add('hidden');
+        addressInput.value = '';
+      }
+    }
+
+    // Cancelar edição do grupo
+    function cancelGroupEdit() {
+      toggleGroupEdit();
+    }
+
+    // Salvar edição do grupo
+    async function saveGroupEdit() {
+      try {
+        // Validar campos obrigatórios
+        const groupName = document.getElementById('edit-group-name').value.trim();
+        const representative = document.getElementById('edit-group-representative').value.trim();
+        const email = document.getElementById('edit-group-email').value.trim();
+        const phone = document.getElementById('edit-group-phone').value.trim();
+        
+        if (!groupName || !representative || !email || !phone) {
+          showAlert('Erro', 'Por favor, preencha todos os campos obrigatórios.', 'error');
+          return;
+        }
+
+        const hasHeadquarters = document.getElementById('edit-group-headquarters').value === 'true';
+        const headquartersAddress = hasHeadquarters 
+          ? document.getElementById('edit-group-headquarters-address').value.trim() 
+          : null;
+
+        const updatedData = {
+          group_name: groupName,
+          representative: representative,
+          email: email,
+          phone: phone,
+          has_headquarters: hasHeadquarters,
+          headquarters_address: headquartersAddress
+        };
+
+        const { error } = await supabase
+          .from('groups')
+          .update(updatedData)
+          .eq('id', currentGroup.id);
+
+        if (error) throw error;
+
+        showAlert('Sucesso', 'Informações do grupo atualizadas com sucesso!', 'success');
+        
+        // Recarregar os dados
+        await loadGroupData();
+        toggleGroupEdit();
+      } catch (error) {
+        console.error('Erro ao atualizar grupo:', error);
+        showAlert('Erro', `Erro ao atualizar grupo: ${error.message}`, 'error');
+      }
     }
 
     // Exibir membros
@@ -499,7 +695,6 @@
     // Salvar edição do membro
     async function saveMemberEdit(memberId) {
       try {
-        // Validar campos obrigatórios
         const name = document.getElementById(`edit-name-${memberId}`).value.trim();
         const birthDate = document.getElementById(`edit-birthdate-${memberId}`).value;
         const mothersName = document.getElementById(`edit-mother-${memberId}`).value.trim();
@@ -541,8 +736,6 @@
         if (error) throw error;
 
         showAlert('Sucesso', 'Membro atualizado com sucesso!', 'success');
-        
-        // Recarregar os dados
         await loadGroupData();
       } catch (error) {
         console.error('Erro ao atualizar membro:', error);
@@ -572,8 +765,6 @@
 
         showAlert('Sucesso', 'Membro excluído com sucesso!', 'success');
         closeDeleteModal();
-        
-        // Recarregar os dados
         await loadGroupData();
       } catch (error) {
         console.error('Erro ao excluir membro:', error);
@@ -591,7 +782,6 @@
           return;
         }
 
-        // Carregar grupo
         const { data: group, error: groupError } = await supabase
           .from('groups')
           .select('*')
@@ -603,7 +793,7 @@
         if (!group) {
           showAlert('Aviso', 'Nenhum grupo cadastrado. Redirecionando...', 'warning');
           setTimeout(() => {
-            window.location.href = 'cadastro.html';
+            window.location.href = 'cadastro-grupo.html';
           }, 2000);
           return;
         }
@@ -611,7 +801,6 @@
         currentGroup = group;
         displayGroupInfo(group);
 
-        // Carregar membros
         const { data: members, error: membersError } = await supabase
           .from('members')
           .select('*')
@@ -632,10 +821,21 @@
     // Event Listeners
     document.getElementById('logoutButton').addEventListener('click', async function() {
       await supabase.auth.signOut();
+      sessionStorage.clear();
       window.location.href = 'index.html';
     });
 
-   
+    document.getElementById('addMemberButton').addEventListener('click', function() {
+      if (currentGroup) {
+        sessionStorage.setItem('currentGroupId', currentGroup.id);
+      }
+      window.location.href = 'cadastro-membro.html';
+    });
+
+    document.getElementById('editGroupButton').addEventListener('click', function() {
+      toggleGroupEdit();
+    });
+
     // Inicializar
     loadGroupData();
 
@@ -648,4 +848,4 @@
     });
   </script>
 </body>
-</html> 
+</html>

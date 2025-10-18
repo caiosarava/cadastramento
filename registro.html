@@ -3,11 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COMESOL - Registro</title>
+    <title>COMESOL - Criar Conta</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+        }
+        .card {
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+        .btn-primary {
+            background-color: #48bb78;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #38a169;
+        }
+        .btn-primary:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
     <div class="card bg-white p-8 md:p-10 rounded-xl w-full max-w-md">
@@ -32,6 +50,10 @@
                 <input type="password" id="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="••••••••" minlength="6">
                 <p class="text-xs text-gray-500 mt-1">A senha deve ter pelo menos 6 caracteres</p>
             </div>
+            <div>
+                <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirmar Senha</label>
+                <input type="password" id="confirmPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="••••••••" minlength="6">
+            </div>
 
             <button type="submit" id="registerButton" class="btn-primary w-full text-white font-semibold py-2.5 rounded-lg flex items-center justify-center shadow-md">
                 <span id="loadingSpinner" class="hidden mr-2">
@@ -45,30 +67,42 @@
         </form>
 
         <div class="mt-6 text-center">
-            <a href="login.html" class="text-sm text-green-600 hover:text-green-800 transition duration-150">
-                Já tem uma conta? Faça login
+            <a href="login.html" class="text-sm text-green-600 hover:text-green-800 transition duration-150 font-medium">
+                Já tem uma conta? Fazer login
             </a>
         </div>
     </div>
 
     <script type="module">
-        import { supabase } from './js/supabase.js';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
+
+        const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnYXJjY3BybXZncXN2aXZuZXJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTE2NTQ1OSwiZXhwIjoyMDc0NzQxNDU5fQ.CIZo0X0ua2teiR4zfUJnSA1WfOP_HFzDZPA0dBjsGtY';
+        
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const elements = {
             form: document.getElementById('registrationForm'),
             fullName: document.getElementById('fullName'),
             email: document.getElementById('email'),
             password: document.getElementById('password'),
+            confirmPassword: document.getElementById('confirmPassword'),
             button: document.getElementById('registerButton'),
             loadingSpinner: document.getElementById('loadingSpinner'),
             buttonText: document.getElementById('buttonText'),
             statusMessage: document.getElementById('statusMessage')
         };
 
-        function displayStatus(message, className) {
+        function displayStatus(message, className, duration = 0) {
             elements.statusMessage.textContent = message;
             elements.statusMessage.className = `p-3 mb-4 rounded-lg text-sm text-center ${className}`;
             elements.statusMessage.classList.remove('hidden');
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    elements.statusMessage.classList.add('hidden');
+                }, duration);
+            }
         }
 
         function setLoading(isLoading) {
@@ -88,47 +122,86 @@
             const fullName = elements.fullName.value.trim();
             const email = elements.email.value.trim();
             const password = elements.password.value;
+            const confirmPassword = elements.confirmPassword.value;
 
-            if (!fullName || !email || !password) {
-                displayStatus('Preencha todos os campos.', 'bg-yellow-100 text-yellow-700');
+            // Validações
+            if (!fullName || !email || !password || !confirmPassword) {
+                displayStatus('Preencha todos os campos.', 'bg-yellow-100 text-yellow-700', 3000);
                 return;
             }
 
             if (password.length < 6) {
-                displayStatus('A senha deve ter pelo menos 6 caracteres.', 'bg-yellow-100 text-yellow-700');
+                displayStatus('A senha deve ter pelo menos 6 caracteres.', 'bg-yellow-100 text-yellow-700', 3000);
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                displayStatus('As senhas não coincidem.', 'bg-yellow-100 text-yellow-700', 3000);
                 return;
             }
 
             setLoading(true);
 
             try {
+                // Cria a conta com autoConfirm (não requer confirmação de email)
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
                         data: {
                             full_name: fullName
-                        }
+                        },
+                        emailRedirectTo: undefined // Desabilita o redirect de email
                     }
                 });
 
                 if (error) throw error;
 
                 if (data?.user) {
-                    displayStatus('Conta criada com sucesso! Redirecionando...', 'bg-green-100 text-green-700');
-                    // Pequeno delay para mostrar a mensagem de sucesso
+                    displayStatus('✅ Conta criada com sucesso! Redirecionando...', 'bg-green-100 text-green-700');
+                    
+                    // Aguarda um momento e redireciona para o cadastro do grupo
                     setTimeout(() => {
-                        window.location.href = 'cadastro.html';
+                        window.location.href = 'cadastro-grupo.html';
                     }, 1500);
+                } else {
+                    // Caso o usuário precise confirmar email (se autoConfirm estiver desabilitado)
+                    displayStatus('Conta criada! Verifique seu email para confirmar.', 'bg-blue-100 text-blue-700');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 3000);
                 }
             } catch (error) {
                 console.error('Erro no registro:', error);
-                displayStatus(`Erro ao criar conta: ${error.message}`, 'bg-red-100 text-red-700');
+                
+                let errorMessage = error.message;
+                
+                // Mensagens de erro personalizadas
+                if (error.message.includes('already registered')) {
+                    errorMessage = 'Este email já está cadastrado. Faça login ou use outro email.';
+                } else if (error.message.includes('Invalid email')) {
+                    errorMessage = 'Email inválido. Por favor, verifique o endereço de email.';
+                } else if (error.message.includes('Password')) {
+                    errorMessage = 'A senha não atende aos requisitos mínimos.';
+                }
+                
+                displayStatus(`Erro: ${errorMessage}`, 'bg-red-100 text-red-700', 5000);
                 setLoading(false);
             }
         }
 
         elements.form.addEventListener('submit', handleRegistration);
+
+        // Validação em tempo real das senhas
+        elements.confirmPassword.addEventListener('input', function() {
+            if (elements.password.value && elements.confirmPassword.value) {
+                if (elements.password.value !== elements.confirmPassword.value) {
+                    elements.confirmPassword.setCustomValidity('As senhas não coincidem');
+                } else {
+                    elements.confirmPassword.setCustomValidity('');
+                }
+            }
+        });
     </script>
 </body>
 </html>

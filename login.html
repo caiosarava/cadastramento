@@ -31,7 +31,7 @@
     <div class="card bg-white p-8 md:p-10 rounded-xl w-full max-w-md">
         <header class="text-center mb-8">
             <h1 class="text-3xl font-bold text-green-700">COMESOL</h1>
-            <p class="text-gray-500 mt-1" id="formTitle">Login</p>
+            <p class="text-gray-500 mt-1">Sistema de Cadastro de Grupos de Economia Solidária</p>
         </header>
 
         <div id="statusMessage" class="hidden p-3 mb-4 rounded-lg text-sm text-center" role="alert"></div>
@@ -58,9 +58,9 @@
         </form>
 
         <div class="mt-6 text-center">
-            <button id="toggleModeButton" class="text-sm text-green-600 hover:text-green-800 transition duration-150">
-                Ainda não tem acesso? Cadastrar Novo Grupo
-            </button>
+            <a href="registro.html" class="text-sm text-green-600 hover:text-green-800 transition duration-150 font-medium">
+                Ainda não tem acesso? Criar conta
+            </a>
         </div>
     </div>
 
@@ -72,8 +72,6 @@
         
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let currentMode = 'login'; // 'login' ou 'signup'
-
         const elements = {
             form: document.getElementById('authForm'),
             email: document.getElementById('email'),
@@ -81,39 +79,30 @@
             button: document.getElementById('authButton'),
             loadingSpinner: document.getElementById('loadingSpinner'),
             buttonText: document.getElementById('buttonText'),
-            statusMessage: document.getElementById('statusMessage'),
-            formTitle: document.getElementById('formTitle'),
-            toggleButton: document.getElementById('toggleModeButton')
+            statusMessage: document.getElementById('statusMessage')
         };
 
-        function displayStatus(message, className) {
+        function displayStatus(message, className, duration = 0) {
             elements.statusMessage.textContent = message;
             elements.statusMessage.className = `p-3 mb-4 rounded-lg text-sm text-center ${className}`;
             elements.statusMessage.classList.remove('hidden');
             
-            setTimeout(() => {
-                elements.statusMessage.classList.add('hidden');
-            }, 5000);
+            if (duration > 0) {
+                setTimeout(() => {
+                    elements.statusMessage.classList.add('hidden');
+                }, duration);
+            }
         }
 
         function setLoading(isLoading) {
             elements.button.disabled = isLoading;
             if (isLoading) {
-                elements.buttonText.textContent = currentMode === 'login' ? 'Entrando...' : 'Cadastrando...';
+                elements.buttonText.textContent = 'Entrando...';
                 elements.loadingSpinner.classList.remove('hidden');
             } else {
-                elements.buttonText.textContent = currentMode === 'login' ? 'Entrar' : 'Cadastrar Novo Grupo';
+                elements.buttonText.textContent = 'Entrar';
                 elements.loadingSpinner.classList.add('hidden');
             }
-        }
-
-        function toggleAuthMode() {
-            currentMode = currentMode === 'login' ? 'signup' : 'login';
-            elements.formTitle.textContent = currentMode === 'login' ? 'Login' : 'Cadastro de Acesso';
-            elements.buttonText.textContent = currentMode === 'login' ? 'Entrar' : 'Cadastrar Novo Grupo';
-            elements.toggleButton.textContent = currentMode === 'login'
-                ? 'Ainda não tem acesso? Cadastrar Novo Grupo'
-                : 'Já tem acesso? Fazer Login';
         }
 
         async function checkIfHasGroup(userId) {
@@ -127,72 +116,56 @@
                 if (error) throw error;
 
                 if (groupData) {
-                    // Se já tem um grupo cadastrado, vai para visualização
+                    // Já tem grupo cadastrado, vai para visualização
                     window.location.href = 'visualizacao.html';
                 } else {
-                    // Se não tem grupo, vai para o cadastro do grupo
+                    // Não tem grupo, vai para cadastro do grupo
                     window.location.href = 'cadastro-grupo.html';
                 }
             } catch (err) {
                 console.error('Erro ao verificar grupo:', err);
-                displayStatus(`Erro ao verificar dados: ${err.message}`, 'bg-red-100 text-red-700');
+                displayStatus(`Erro ao verificar dados: ${err.message}`, 'bg-red-100 text-red-700', 5000);
             }
         }
 
-        async function handleAuth(e) {
+        async function handleLogin(e) {
             e.preventDefault();
 
             const email = elements.email.value.trim();
             const password = elements.password.value;
 
             if (!email || !password) {
-                displayStatus('Preencha email e senha.', 'bg-yellow-100 text-yellow-700');
+                displayStatus('Preencha email e senha.', 'bg-yellow-100 text-yellow-700', 3000);
                 return;
             }
 
             setLoading(true);
 
             try {
-                let response;
-                if (currentMode === 'signup') {
-                    response = await supabase.auth.signUp({ email, password });
-                } else {
-                    response = await supabase.auth.signInWithPassword({ email, password });
-                }
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
 
-                const { data, error } = response;
                 if (error) throw error;
 
                 if (data.user) {
-                    if (currentMode === 'signup') {
-                        displayStatus('Conta criada! Verifique seu email para confirmar.', 'bg-blue-100 text-blue-700');
-                        setTimeout(() => {
-                            currentMode = 'login';
-                            toggleAuthMode();
-                            setLoading(false);
-                        }, 3000);
-                    } else {
-                        checkIfHasGroup(data.user.id);
-                    }
-                } else {
-                    displayStatus('Verifique seu email para confirmar o cadastro.', 'bg-blue-100 text-blue-700');
-                    setLoading(false);
+                    await checkIfHasGroup(data.user.id);
                 }
             } catch (error) {
-                console.error('Erro de autenticação:', error);
-                displayStatus(`❌ Erro: ${error.message}`, 'bg-red-100 text-red-700');
+                console.error('Erro no login:', error);
+                displayStatus(`Erro ao fazer login: ${error.message}`, 'bg-red-100 text-red-700', 5000);
                 setLoading(false);
             }
         }
 
-        elements.form.addEventListener('submit', handleAuth);
-        elements.toggleButton.addEventListener('click', toggleAuthMode);
+        elements.form.addEventListener('submit', handleLogin);
 
-        // Verifica se já está autenticado
+        // Verifica se já está autenticado ao carregar a página
         window.addEventListener('DOMContentLoaded', async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                checkIfHasGroup(user.id);
+                await checkIfHasGroup(user.id);
             }
         });
     </script>
