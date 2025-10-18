@@ -634,21 +634,18 @@
       await supabase.auth.signOut();
       window.location.href = 'index.html';
     });
-
-    document.getElementById('addMemberButton').addEventListener('click', function() {
-      window.location.href = 'cadastro.html';
-    });
-
-    // Inicializar
-    loadGroupData();
-
+ 
+ 
      // Substituir o botão de logout por:
     NavigationHelper.setupLogoutButton('logoutButton');
 
     // Adicionar botão para voltar ao cadastro
     document.getElementById('addMemberButton')?.addEventListener('click', function() {
         NavigationHelper.goToMemberForm();
-    });
+    // Inicializar
+    loadGroupData();
+    
+      });
   </script>
 </body>
 </html> 
