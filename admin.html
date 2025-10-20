@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - COMESOL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+        }
+        .card {
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-white shadow-sm no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">COMESOL - Dashboard Admin</h1>
+                <p class="text-sm text-gray-600">Painel de Controle e Estatísticas</p>
+            </div>
+            <button id="logoutButton" class="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition duration-200 flex items-center font-semibold">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+                Sair
+            </button>
+        </div>
+    </header>
+
+    <!-- Login Modal (para admin) -->
+    <div id="loginModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg max-w-md w-full mx-4 shadow-2xl">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Acesso Administrativo</h2>
+            <p class="text-sm text-gray-600 mb-6">Digite as credenciais de administrador</p>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Email Admin</label>
+                <input type="email" id="adminEmail" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="admin@comesol.com">
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                <input type="password" id="adminPassword" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="••••••••">
+            </div>
+            <button onclick="adminLogin()" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition font-semibold">
+                Entrar como Admin
+            </button>
+            <div id="loginError" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main id="mainContent" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-12">
+            <svg class="animate-spin h-12 w-12 text-purple-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-600">Carregando dados...</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div id="statsSection" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="card bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-100 text-sm font-medium">Total de Grupos</p>
+                            <p class="text-3xl font-bold mt-2" id="totalGroups">0</p>
+                        </div>
+                        <svg class="w-12 h-12 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20h-5v-2a3 3 0 00-5.356-1.857M17 20v-2c0-.592-.323-1.137-.833-1.432m0 0a3.001 3.001 0 00-5.334 0"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="card bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-green-100 text-sm font-medium">Total de Membros</p>
+                            <p class="text-3xl font-bold mt-2" id="totalMembers">0</p>
+                        </div>
+                        <svg class="w-12 h-12 text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="card bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-purple-100 text-sm font-medium">Com Sede Própria</p>
+                            <p class="text-3xl font-bold mt-2" id="groupsWithHQ">0</p>
+                        </div>
+                        <svg class="w-12 h-12 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="card bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-orange-100 text-sm font-medium">Média Membros/Grupo</p>
+                            <p class="text-3xl font-bold mt-2" id="avgMembers">0</p>
+                        </div>
+                        <svg class="w-12 h-12 text-orange-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4 mb-8 no-print">
+                <button onclick="exportToCSV()" class="bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition font-semibold flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Exportar CSV
+                </button>
+                <button onclick="window.print()" class="bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 transition font-semibold flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                    </svg>
+                    Imprimir
+                </button>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="card bg-white p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Distribuição por Gênero</h3>
+                    <div class="chart-container">
+                        <canvas id="genderChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card bg-white p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Distribuição por Escolaridade</h3>
+                    <div class="chart-container">
+                        <canvas id="educationChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card bg-white p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Faixa de Renda Mensal</h3>
+                    <div class="chart-container">
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card bg-white p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Distribuição por Etnia</h3>
+                    <div class="chart-container">
+                        <canvas id="ethnicityChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card bg-white p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Faixa Etária</h3>
+                    <div class="chart-container">
+                        <canvas id="ageChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card bg-white p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Outras Atividades Econômicas</h3>
+                    <div class="chart-container">
+                        <canvas id="otherActivityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Products/Services -->
+            <div class="card bg-white p-6 rounded-xl mb-8">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Produtos e Serviços Mais Oferecidos</h3>
+                <div id="topProducts" class="space-y-2">
+                    <!-- Will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Top Raw Materials -->
+            <div class="card bg-white p-6 rounded-xl mb-8">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Matérias-Primas Mais Utilizadas</h3>
+                <div id="topMaterials" class="space-y-2">
+                    <!-- Will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Groups Table -->
+            <div class="card bg-white p-6 rounded-xl">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Lista de Grupos Cadastrados</h3>
+                <div class="table-container">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome do Grupo</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Representante</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefone</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Membros</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider no-print">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="groupsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Will be populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
+
+        const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnYXJjY3BybXZncXN2aXZuZXJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTE2NTQ1OSwiZXhwIjoyMDc0NzQxNDU5fQ.CIZo0X0ua2teiR4zfUJnSA1WfOP_HFzDZPA0dBjsGtY';
+        
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let allGroups = [];
+        let allMembers = [];
+        let charts = {};
+
+        // Admin Login
+        window.adminLogin = async function() {
+            const email = document.getElementById('adminEmail').value.trim();
+            const password = document.getElementById('adminPassword').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (!email || !password) {
+                errorDiv.textContent = 'Preencha todos os campos';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (error) throw error;
+
+                // Verificar se é admin (você pode adicionar uma coluna na tabela de usuários)
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                await loadAllData();
+            } catch (error) {
+                errorDiv.textContent = 'Credenciais inválidas';
+                errorDiv.classList.remove('hidden');
+            }
+        };
+
+        // Load all data
+        async function loadAllData() {
+            try {
+                // Load groups
+                const { data: groups, error: groupsError } = await supabase
+                    .from('groups')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (groupsError) throw groupsError;
+                allGroups = groups || [];
+
+                // Load members
+                const { data: members, error: membersError } = await supabase
+                    .from('members')
+                    .select('*');
+
+                if (membersError) throw membersError;
+                allMembers = members || [];
+
+                displayStats();
+                createCharts();
+                displayTopItems();
+                displayGroupsTable();
+
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('statsSection').classList.remove('hidden');
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                alert('Erro ao carregar dados: ' + error.message);
+            }
+        }
+
+        // Display statistics
+        function displayStats() {
+            document.getElementById('totalGroups').textContent = allGroups.length;
+            document.getElementById('totalMembers').textContent = allMembers.length;
+            
+            const groupsWithHQ = allGroups.filter(g => g.has_headquarters).length;
+            document.getElementById('groupsWithHQ').textContent = groupsWithHQ;
+            
+            const avgMembers = allGroups.length > 0 
+                ? (allMembers.length / allGroups.length).toFixed(1)
+                : 0;
+            document.getElementById('avgMembers').textContent = avgMembers;
+        }
+
+        // Calculate age from birthdate
+        function calculateAge(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        // Get age range
+        function getAgeRange(age) {
+            if (age < 18) return 'Menor de 18';
+            if (age < 25) return '18-24';
+            if (age < 35) return '25-34';
+            if (age < 45) return '35-44';
+            if (age < 55) return '45-54';
+            if (age < 65) return '55-64';
+            return '65+';
+        }
+
+        // Create charts
+        function createCharts() {
+            // Gender distribution
+            const genderCounts = {};
+            allMembers.forEach(m => {
+                const gender = m.member_gender || 'Não informado';
+                genderCounts[gender] = (genderCounts[gender] || 0) + 1;
+            });
+
+            charts.gender = new Chart(document.getElementById('genderChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(genderCounts),
+                    datasets: [{
+                        data: Object.values(genderCounts),
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF',
+                            '#FF9F40'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Education distribution
+            const educationCounts = {};
+            allMembers.forEach(m => {
+                const edu = m.member_education || 'Não informado';
+                educationCounts[edu] = (educationCounts[edu] || 0) + 1;
+            });
+
+            charts.education = new Chart(document.getElementById('educationChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(educationCounts),
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: Object.values(educationCounts),
+                        backgroundColor: '#36A2EB'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Income distribution
+            const incomeCounts = {};
+            allMembers.forEach(m => {
+                const income = m.member_monthly_income || 'Não informado';
+                incomeCounts[income] = (incomeCounts[income] || 0) + 1;
+            });
+
+            charts.income = new Chart(document.getElementById('incomeChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(incomeCounts),
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: Object.values(incomeCounts),
+                        backgroundColor: '#4BC0C0'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Ethnicity distribution
+            const ethnicityCounts = {};
+            allMembers.forEach(m => {
+                const eth = m.member_ethnicity || 'Não informado';
+                ethnicityCounts[eth] = (ethnicityCounts[eth] || 0) + 1;
+            });
+
+            charts.ethnicity = new Chart(document.getElementById('ethnicityChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(ethnicityCounts),
+                    datasets: [{
+                        data: Object.values(ethnicityCounts),
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Age distribution
+            const ageCounts = {};
+            allMembers.forEach(m => {
+                if (m.member_birth_date) {
+                    const age = calculateAge(m.member_birth_date);
+                    const range = getAgeRange(age);
+                    ageCounts[range] = (ageCounts[range] || 0) + 1;
+                }
+            });
+
+            const ageRanges = ['Menor de 18', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+            const ageData = ageRanges.map(range => ageCounts[range] || 0);
+
+            charts.age = new Chart(document.getElementById('ageChart'), {
+                type: 'bar',
+                data: {
+                    labels: ageRanges,
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: ageData,
+                        backgroundColor: '#9966FF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Other activity
+            const activityCounts = { 'Sim': 0, 'Não': 0 };
+            allMembers.forEach(m => {
+                const activity = m.member_other_activity_toggle || 'Não';
+                activityCounts[activity]++;
+            });
+
+            charts.activity = new Chart(document.getElementById('otherActivityChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(activityCounts),
+                    datasets: [{
+                        data: Object.values(activityCounts),
+                        backgroundColor: ['#FF9F40', '#4BC0C0']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Display top products and materials
+        function displayTopItems() {
+            // Products
+            const productCounts = {};
+            allMembers.forEach(m => {
+                if (m.member_products) {
+                    const products = m.member_products.split(',').map(p => p.trim().toLowerCase());
+                    products.forEach(p => {
+                        if (p) productCounts[p] = (productCounts[p] || 0) + 1;
+                    });
+                }
+            });
+
+            const topProducts = Object.entries(productCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            const productsHTML = topProducts.map(([product, count], index) => `
+                <div class="flex justify-between items-center py-2 px-4 bg-gray-50 rounded-lg">
+                    <span class="font-medium text-gray-700">${index + 1}. ${product.charAt(0).toUpperCase() + product.slice(1)}</span>
+                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">${count}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('topProducts').innerHTML = productsHTML || '<p class="text-gray-500">Nenhum produto cadastrado</p>';
+
+            // Materials
+            const materialCounts = {};
+            allMembers.forEach(m => {
+                if (m.member_raw_materials) {
+                    const materials = m.member_raw_materials.split(',').map(mat => mat.trim().toLowerCase());
+                    materials.forEach(mat => {
+                        if (mat) materialCounts[mat] = (materialCounts[mat] || 0) + 1;
+                    });
+                }
+            });
+
+            const topMaterials = Object.entries(materialCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            const materialsHTML = topMaterials.map(([material, count], index) => `
+                <div class="flex justify-between items-center py-2 px-4 bg-gray-50 rounded-lg">
+                    <span class="font-medium text-gray-700">${index + 1}. ${material.charAt(0).toUpperCase() + material.slice(1)}</span>
+                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">${count}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('topMaterials').innerHTML = materialsHTML || '<p class="text-gray-500">Nenhuma matéria-prima cadastrada</p>';
+        }
+
+        // Display groups table
+        function displayGroupsTable() {
+            const tbody = document.getElementById('groupsTableBody');
+            
+            const rows = allGroups.map(group => {
+                const memberCount = allMembers.filter(m => m.group_id === group.id).length;
+                return `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${group.group_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${group.representative}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${group.email}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${group.phone}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${memberCount}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 no-print">
+                            <button onclick="viewGroupDetails('${group.id}')" class="text-blue-600 hover:text-blue-900 font-medium">Ver Detalhes</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = rows || '<tr><td colspan="6" class="text-center py-4 text-gray-500">Nenhum grupo cadastrado</td></tr>';
+        }
+
+        // View group details
+        window.viewGroupDetails = function(groupId) {
+            const group = allGroups.find(g => g.id === groupId);
+            const members = allMembers.filter(m => m.group_id === groupId);
+            
+            if (!group) return;
+
+            let details = `
+=== DETALHES DO GRUPO ===
+
+Nome do Grupo: ${group.group_name}
+Representante: ${group.representative}
+Email: ${group.email}
+Telefone: ${group.phone}
+Possui Sede Própria: ${group.has_headquarters ? 'Sim' : 'Não'}
+${group.headquarters_address ? 'Endereço da Sede: ' + group.headquarters_address : ''}
+
+Total de Membros: ${members.length}
+
+=== MEMBROS ===
+`;
+
+            members.forEach((member, index) => {
+                details += `
+${index + 1}. ${member.member_name}
+   CPF: ${member.member_cpf}
+   Email: ${member.member_email}
+   Telefone: ${member.member_phone}
+   Função: ${member.member_role}
+   Produtos/Serviços: ${member.member_products}
+   
+`;
+            });
+
+            alert(details);
+        };
+
+        // Export to CSV
+        window.exportToCSV = function() {
+            let csv = 'Grupo,Representante,Email,Telefone,Sede Própria,Membro,CPF,Email Membro,Telefone Membro,Data Nascimento,Gênero,Etnia,Escolaridade,Renda Mensal,Função,Produtos/Serviços,Matérias-Primas\n';
+            
+            allGroups.forEach(group => {
+                const members = allMembers.filter(m => m.group_id === group.id);
+                
+                if (members.length === 0) {
+                    csv += `"${group.group_name}","${group.representative}","${group.email}","${group.phone}","${group.has_headquarters ? 'Sim' : 'Não'}","","","","","","","","","","","",""\n`;
+                } else {
+                    members.forEach(member => {
+                        csv += `"${group.group_name}","${group.representative}","${group.email}","${group.phone}","${group.has_headquarters ? 'Sim' : 'Não'}","${member.member_name}","${member.member_cpf}","${member.member_email}","${member.member_phone}","${member.member_birth_date || ''}","${member.member_gender || ''}","${member.member_ethnicity || ''}","${member.member_education || ''}","${member.member_monthly_income || ''}","${member.member_role || ''}","${member.member_products || ''}","${member.member_raw_materials || ''}"\n`;
+                    });
+                }
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `comesol_dados_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        // Logout
+        document.getElementById('logoutButton').addEventListener('click', async function() {
+            await supabase.auth.signOut();
+            window.location.reload();
+        });
+
+        // Check if already logged in
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                await loadAllData();
+            }
+        });
+
+        // Enter key to login
+        document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                adminLogin();
+            }
+        });
+    </script>
+</body>
+</html>
