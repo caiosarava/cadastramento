@@ -71,7 +71,6 @@
   </style>
 </head>
 <body>
-  <!-- Botão de Logout Fixo -->
   <button id="logoutButton" class="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition duration-200 flex items-center font-semibold">
     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -86,7 +85,6 @@
         <p class="text-sm text-gray-600">Visualize e gerencie as informações do seu grupo e membros</p>
       </header>
 
-      <!-- Informações do Grupo -->
       <section id="group-info" class="mb-8 p-6 bg-green-50 rounded-lg border border-green-200">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold text-gray-700 flex items-center">
@@ -103,12 +101,8 @@
           </button>
         </div>
         
-        <!-- Visualização dos dados do grupo -->
-        <div id="group-view" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Dados do grupo serão inseridos aqui -->
-        </div>
+        <div id="group-view" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         
-        <!-- Formulário de edição do grupo (inicialmente oculto) -->
         <div id="group-edit" class="hidden">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -146,7 +140,6 @@
         </div>
       </section>
 
-      <!-- Membros -->
       <section class="mb-8">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold text-gray-700 flex items-center">
@@ -162,14 +155,11 @@
             Adicionar Membro
           </button>
         </div>
-        <div id="members-list" class="space-y-4">
-          <!-- Membros serão inseridos aqui -->
-        </div>
+        <div id="members-list" class="space-y-4"></div>
       </section>
     </div>
   </div>
 
-  <!-- Modal de Confirmação de Exclusão -->
   <div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white p-6 rounded-lg max-w-md w-full mx-4 shadow-2xl">
       <h3 class="text-lg font-bold mb-3 text-red-600">Confirmar Exclusão</h3>
@@ -181,7 +171,6 @@
     </div>
   </div>
 
-  <!-- Modal de Alerta -->
   <div id="alertModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white p-6 rounded-lg max-w-sm w-full mx-4 shadow-2xl">
       <h3 id="alertTitle" class="text-lg font-bold mb-3"></h3>
@@ -193,7 +182,6 @@
   </div>
 
  <script type="module">
-    import { NavigationHelper } from './js/navigation-helper.js';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
 
     const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
@@ -207,7 +195,6 @@
     let editingMemberId = null;
     let isEditingGroup = false;
 
-    // Funções de Utilidade
     window.closeDeleteModal = function() {
       document.getElementById('deleteModal').classList.add('hidden');
       document.getElementById('deleteModal').classList.remove('flex');
@@ -266,7 +253,6 @@
       return value.substring(0, 15);
     }
 
-    // Exibir informações do grupo
     function displayGroupInfo(group) {
       const container = document.getElementById('group-view');
       container.innerHTML = `
@@ -299,14 +285,12 @@
       `;
     }
 
-    // Alternar modo de edição do grupo
     function toggleGroupEdit() {
       const viewDiv = document.getElementById('group-view');
       const editDiv = document.getElementById('group-edit');
       const editButton = document.getElementById('editGroupButton');
       
       if (isEditingGroup) {
-        // Voltar para modo visualização
         viewDiv.classList.remove('hidden');
         editDiv.classList.add('hidden');
         editButton.innerHTML = `
@@ -317,7 +301,6 @@
         `;
         isEditingGroup = false;
       } else {
-        // Entrar em modo edição
         viewDiv.classList.add('hidden');
         editDiv.classList.remove('hidden');
         editButton.innerHTML = `
@@ -327,13 +310,10 @@
           Cancelar
         `;
         isEditingGroup = true;
-        
-        // Preencher formulário com dados atuais
         fillGroupEditForm();
       }
     }
 
-    // Preencher formulário de edição com dados do grupo
     function fillGroupEditForm() {
       if (!currentGroup) return;
       
@@ -350,14 +330,12 @@
         document.getElementById('edit-group-headquarters-address-field').classList.add('hidden');
       }
       
-      // Configurar máscara de telefone
       const phoneInput = document.getElementById('edit-group-phone');
       phoneInput.addEventListener('input', (e) => {
         e.target.value = maskPhone(e.target.value);
       });
     }
 
-    // Alternar campo de endereço da sede
     function toggleGroupHeadquartersAddress() {
       const hasHeadquarters = document.getElementById('edit-group-headquarters').value === 'true';
       const addressField = document.getElementById('edit-group-headquarters-address-field');
@@ -371,15 +349,12 @@
       }
     }
 
-    // Cancelar edição do grupo
     function cancelGroupEdit() {
       toggleGroupEdit();
     }
 
-    // Salvar edição do grupo
     async function saveGroupEdit() {
       try {
-        // Validar campos obrigatórios
         const groupName = document.getElementById('edit-group-name').value.trim();
         const representative = document.getElementById('edit-group-representative').value.trim();
         const email = document.getElementById('edit-group-email').value.trim();
@@ -413,7 +388,6 @@
 
         showAlert('Sucesso', 'Informações do grupo atualizadas com sucesso!', 'success');
         
-        // Recarregar os dados
         await loadGroupData();
         toggleGroupEdit();
       } catch (error) {
@@ -422,7 +396,6 @@
       }
     }
 
-    // Exibir membros
     function displayMembers(members) {
       const membersList = document.getElementById('members-list');
       const memberCount = document.getElementById('member-count');
@@ -440,13 +413,10 @@
         membersList.appendChild(card);
       });
 
-      // Adicionar event listeners aos botões após criar os cards
       setupMemberButtons();
     }
 
-    // Configurar event listeners para os botões de membro
     function setupMemberButtons() {
-      // Botões de edição
       document.querySelectorAll('.btn-edit-member').forEach(button => {
         button.addEventListener('click', function() {
           const memberId = this.getAttribute('data-member-id');
@@ -454,7 +424,6 @@
         });
       });
 
-      // Botões de exclusão
       document.querySelectorAll('.btn-delete-member').forEach(button => {
         button.addEventListener('click', function() {
           const memberId = this.getAttribute('data-member-id');
@@ -462,7 +431,6 @@
         });
       });
 
-      // Botões de salvar edição (usando event delegation)
       document.getElementById('members-list').addEventListener('click', function(e) {
         if (e.target.closest('.btn-save-edit')) {
           const button = e.target.closest('.btn-save-edit');
@@ -478,7 +446,6 @@
       });
     }
 
-    // Criar card de membro
     function createMemberCard(member, index) {
       const card = document.createElement('div');
       card.className = 'bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition';
@@ -516,6 +483,7 @@
           ${createFieldDisplay('Etnia', member.member_ethnicity)}
           ${createFieldDisplay('Escolaridade', member.member_education)}
           ${createFieldDisplay('Pessoas na Casa', member.member_household_size)}
+          ${createFieldDisplay('Segmento', member.member_segment)}
           ${createFieldDisplay('Função no Grupo', member.member_role)}
           ${createFieldDisplay('Produtos/Serviços', member.member_products)}
           ${createFieldDisplay('Matérias-Primas', member.member_raw_materials)}
@@ -623,6 +591,18 @@
             <label class="text-xs font-medium text-gray-700">Pessoas na Casa</label>
             <input type="number" id="edit-household-${member.id}" value="${member.member_household_size || ''}" class="field-edit text-sm" min="1">
           </div>
+          <div class="md:col-span-2">
+            <label class="text-xs font-medium text-gray-700">Segmento</label>
+            <select id="edit-segment-${member.id}" class="field-edit text-sm">
+              <option value="Artesanato" ${member.member_segment === 'Artesanato' ? 'selected' : ''}>Artesanato</option>
+              <option value="Gastronomia" ${member.member_segment === 'Gastronomia' ? 'selected' : ''}>Gastronomia</option>
+              <option value="Serviços" ${member.member_segment === 'Serviços' ? 'selected' : ''}>Serviços</option>
+              <option value="Produção" ${member.member_segment === 'Produção' ? 'selected' : ''}>Produção</option>
+              <option value="Cooperativa Social" ${member.member_segment === 'Cooperativa Social' ? 'selected' : ''}>Cooperativa Social</option>
+              <option value="Entidade de Apoio e Fomento" ${member.member_segment === 'Entidade de Apoio e Fomento' ? 'selected' : ''}>Entidade de Apoio e Fomento</option>
+              <option value="Cultura" ${member.member_segment === 'Cultura' ? 'selected' : ''}>Cultura</option>
+            </select>
+          </div>
           <div class="lg:col-span-3">
             <label class="text-xs font-medium text-gray-700">Função no Grupo</label>
             <input type="text" id="edit-role-${member.id}" value="${member.member_role || ''}" class="field-edit text-sm">
@@ -668,7 +648,6 @@
       `;
     }
 
-    // Alternar modo de edição
     function toggleEditMode(memberId) {
       const viewDiv = document.getElementById(`member-view-${memberId}`);
       const editDiv = document.getElementById(`member-edit-${memberId}`);
@@ -682,7 +661,6 @@
       editingMemberId = memberId;
     }
 
-    // Cancelar edição
     function cancelEdit(memberId) {
       const viewDiv = document.getElementById(`member-view-${memberId}`);
       const editDiv = document.getElementById(`member-edit-${memberId}`);
@@ -692,7 +670,6 @@
       editingMemberId = null;
     }
 
-    // Salvar edição do membro
     async function saveMemberEdit(memberId) {
       try {
         const name = document.getElementById(`edit-name-${memberId}`).value.trim();
@@ -719,6 +696,7 @@
           member_ethnicity: document.getElementById(`edit-ethnicity-${memberId}`).value,
           member_education: document.getElementById(`edit-education-${memberId}`).value,
           member_household_size: parseInt(document.getElementById(`edit-household-${memberId}`).value) || 1,
+          member_segment: document.getElementById(`edit-segment-${memberId}`).value,
           member_role: document.getElementById(`edit-role-${memberId}`).value.trim(),
           member_products: document.getElementById(`edit-products-${memberId}`).value.trim(),
           member_raw_materials: document.getElementById(`edit-materials-${memberId}`).value.trim(),
@@ -743,7 +721,6 @@
       }
     }
 
-    // Confirmar exclusão de membro
     function confirmDeleteMember(memberId) {
       memberToDelete = memberId;
       const modal = document.getElementById('deleteModal');
@@ -751,7 +728,6 @@
       modal.classList.add('flex');
     }
 
-    // Excluir membro
     document.getElementById('confirmDeleteButton').addEventListener('click', async function() {
       if (!memberToDelete) return;
       
@@ -772,7 +748,6 @@
       }
     });
 
-    // Carregar dados do grupo
     async function loadGroupData() {
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -818,7 +793,6 @@
       }
     }
 
-    // Event Listeners
     document.getElementById('logoutButton').addEventListener('click', async function() {
       await supabase.auth.signOut();
       sessionStorage.clear();
@@ -836,16 +810,7 @@
       toggleGroupEdit();
     });
 
-    // Inicializar
     loadGroupData();
-
-     // Substituir o botão de logout por:
-    NavigationHelper.setupLogoutButton('logoutButton');
-
-    // Adicionar botão para voltar ao cadastro
-    document.getElementById('addMemberButton')?.addEventListener('click', function() {
-        NavigationHelper.goToMemberForm();
-    });
   </script>
 </body>
 </html>
