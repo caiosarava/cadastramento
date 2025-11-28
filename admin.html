@@ -192,6 +192,13 @@
                         <canvas id="otherActivityChart"></canvas>
                     </div>
                 </div>
+
+                <div class="card bg-white p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Segmento de Atuação</h3>
+                    <div class="chart-container">
+                        <canvas id="segmentChart"></canvas>
+                    </div>
+                </div>
             </div>
 
             <!-- Top Products/Services -->
@@ -258,19 +265,11 @@
                 return;
             }
 
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
-
-                if (error) throw error;
-
-                // Verificar se é admin (você pode adicionar uma coluna na tabela de usuários)
+            if (email === 'daes.ecosol@gmail.com' && password === 'olimpicodaes1') {
                 document.getElementById('loginModal').classList.add('hidden');
                 document.getElementById('mainContent').classList.remove('hidden');
                 await loadAllData();
-            } catch (error) {
+            } else {
                 errorDiv.textContent = 'Credenciais inválidas';
                 errorDiv.classList.remove('hidden');
             }
@@ -546,6 +545,39 @@
                     }
                 }
             });
+
+            // Member Segment distribution
+            const segmentCounts = {};
+            allMembers.forEach(m => {
+                const segment = m.member_segment || 'Não informado';
+                segmentCounts[segment] = (segmentCounts[segment] || 0) + 1;
+            });
+
+            charts.segment = new Chart(document.getElementById('segmentChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(segmentCounts),
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: Object.values(segmentCounts),
+                        backgroundColor: '#FF6384'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
         }
 
         // Display top products and materials
@@ -692,16 +724,6 @@ ${index + 1}. ${member.member_name}
         document.getElementById('logoutButton').addEventListener('click', async function() {
             await supabase.auth.signOut();
             window.location.reload();
-        });
-
-        // Check if already logged in
-        window.addEventListener('DOMContentLoaded', async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                document.getElementById('loginModal').classList.add('hidden');
-                document.getElementById('mainContent').classList.remove('hidden');
-                await loadAllData();
-            }
         });
 
         // Enter key to login
