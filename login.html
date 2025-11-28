@@ -131,6 +131,15 @@
         async function handleLogin(e) {
             e.preventDefault();
 
+            const now = new Date();
+            const startDate = new Date('2025-11-24T00:00:00');
+            const endDate = new Date('2026-03-06T23:59:59');
+
+            if (now < startDate || now > endDate) {
+                displayStatus('O período de login está encerrado.', 'bg-red-100 text-red-700', 5000);
+                return;
+            }
+
             const email = elements.email.value.trim();
             const password = elements.password.value;
 
