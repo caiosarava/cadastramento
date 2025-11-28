@@ -656,39 +656,8 @@
 
         // View group details
         window.viewGroupDetails = function(groupId) {
-            const group = allGroups.find(g => g.id === groupId);
-            const members = allMembers.filter(m => m.group_id === groupId);
-            
-            if (!group) return;
-
-            let details = `
-=== DETALHES DO GRUPO ===
-
-Nome do Grupo: ${group.group_name}
-Representante: ${group.representative}
-Email: ${group.email}
-Telefone: ${group.phone}
-Possui Sede Própria: ${group.has_headquarters ? 'Sim' : 'Não'}
-${group.headquarters_address ? 'Endereço da Sede: ' + group.headquarters_address : ''}
-
-Total de Membros: ${members.length}
-
-=== MEMBROS ===
-`;
-
-            members.forEach((member, index) => {
-                details += `
-${index + 1}. ${member.member_name}
-   CPF: ${member.member_cpf}
-   Email: ${member.member_email}
-   Telefone: ${member.member_phone}
-   Função: ${member.member_role}
-   Produtos/Serviços: ${member.member_products}
-   
-`;
-            });
-
-            alert(details);
+            sessionStorage.setItem('adminViewGroupId', groupId);
+            window.location.href = 'visualizacao_admin.html';
         };
 
         // Export to CSV
