@@ -645,11 +645,12 @@
           <div class="md:col-span-2">
             <label class="text-xs font-medium text-gray-700">Renda Média Mensal</label>
             <select id="edit-income-${member.id}" class="field-edit text-sm">
-              <option value="Ate 1 SM" ${member.member_monthly_income === 'Ate 1 SM' ? 'selected' : ''}>Até 1 SM</option>
+              <option value="De 0 a 1 SM" ${member.member_monthly_income === 'De 0 a 1 SM' ? 'selected' : ''}>De 0 a 1 SM</option>
               <option value="Mais de 1 SM ate 2 SM" ${member.member_monthly_income === 'Mais de 1 SM ate 2 SM' ? 'selected' : ''}>Mais de 1 SM até 2 SM</option>
               <option value="Mais de 2 SM ate 3 SM" ${member.member_monthly_income === 'Mais de 2 SM ate 3 SM' ? 'selected' : ''}>Mais de 2 SM até 3 SM</option>
               <option value="Mais de 3 SM ate 5 SM" ${member.member_monthly_income === 'Mais de 3 SM ate 5 SM' ? 'selected' : ''}>Mais de 3 SM até 5 SM</option>
               <option value="Acima de 5 SM" ${member.member_monthly_income === 'Acima de 5 SM' ? 'selected' : ''}>Acima de 5 SM</option>
+              <option value="Nao se aplica" ${member.member_monthly_income === 'Nao se aplica' ? 'selected' : ''}>Não se aplica</option>
             </select>
           </div>
           <div class="lg:col-span-3">
