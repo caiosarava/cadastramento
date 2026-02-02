@@ -195,6 +195,33 @@
     let editingMemberId = null;
     let isEditingGroup = false;
 
+    // Funções de formatação para máscaras
+    function formatCEP(value) {
+      value = value.replace(/\D/g, '');
+      value = value.replace(/^(\d{5})(\d)/, '$1-$2');
+      return value;
+    }
+
+    function formatCPF(value) {
+      value = value.replace(/\D/g, '');
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      return value;
+    }
+
+    function formatPhone(value) {
+      value = value.replace(/\D/g, '');
+      if (value.length <= 10) {
+        value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+        value = value.replace(/(\d{4})(\d)/, '$1-$2');
+      } else {
+        value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+        value = value.replace(/(\d{5})(\d)/, '$1-$2');
+      }
+      return value;
+    }
+
     window.closeDeleteModal = function() {
       document.getElementById('deleteModal').classList.add('hidden');
       document.getElementById('deleteModal').classList.remove('flex');
@@ -531,11 +558,11 @@
           </div>
           <div>
             <label class="text-xs font-medium text-gray-700">CEP</label>
-            <input type="text" id="edit-cep-${member.id}" value="${member.member_cep || ''}" class="field-edit text-sm" maxlength="9">
+            <input type="text" id="edit-cep-${member.id}" value="${member.member_cep || ''}" class="field-edit text-sm" maxlength="9" data-mask="cep" placeholder="Ex: 00000-000">
           </div>
           <div>
             <label class="text-xs font-medium text-gray-700">Celular</label>
-            <input type="text" id="edit-phone-${member.id}" value="${member.member_phone || ''}" class="field-edit text-sm" maxlength="15">
+            <input type="text" id="edit-phone-${member.id}" value="${member.member_phone || ''}" class="field-edit text-sm" maxlength="15" data-mask="phone" placeholder="Ex: (99) 99999-9999">
           </div>
           <div class="md:col-span-2">
             <label class="text-xs font-medium text-gray-700">Email</label>
@@ -547,7 +574,7 @@
           </div>
           <div>
             <label class="text-xs font-medium text-gray-700">CPF</label>
-            <input type="text" id="edit-cpf-${member.id}" value="${member.member_cpf || ''}" class="field-edit text-sm" maxlength="14">
+            <input type="text" id="edit-cpf-${member.id}" value="${member.member_cpf || ''}" class="field-edit text-sm" maxlength="14" data-mask="cpf" placeholder="Ex: 000.000.000-00">
           </div>
           <div>
             <label class="text-xs font-medium text-gray-700">MEI/CNPJ</label>
@@ -659,6 +686,29 @@
       viewDiv.classList.add('hidden');
       editDiv.classList.remove('hidden');
       editingMemberId = memberId;
+      
+      // Aplicar máscaras aos campos de edição
+      const cepInput = document.getElementById(`edit-cep-${memberId}`);
+      const phoneInput = document.getElementById(`edit-phone-${memberId}`);
+      const cpfInput = document.getElementById(`edit-cpf-${memberId}`);
+      
+      if (cepInput) {
+        cepInput.addEventListener('input', (e) => {
+          e.target.value = formatCEP(e.target.value);
+        });
+      }
+      
+      if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+          e.target.value = formatPhone(e.target.value);
+        });
+      }
+      
+      if (cpfInput) {
+        cpfInput.addEventListener('input', (e) => {
+          e.target.value = formatCPF(e.target.value);
+        });
+      }
     }
 
     function cancelEdit(memberId) {
