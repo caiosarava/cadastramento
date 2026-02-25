@@ -52,7 +52,18 @@ async function checkIfHasGroup(userId) {
 
         if (groupData) {
             // Se já tem um grupo cadastrado, vai para visualização
-            window.location.href = 'visualizacao.html';
+            // Verifica se o período de edição ainda está ativo
+            const now = new Date();
+            const startDate = new Date('2025-11-24T00:00:00');
+            const endDate = new Date('2026-03-02T23:59:59');
+            
+            if (now < startDate || now > endDate) {
+                // Período de edição encerrado, vai para visualização sem edição
+                window.location.href = 'visualizacao_sem_edicao.html';
+            } else {
+                // Ainda está no período de edição, vai para visualização com edição
+                window.location.href = 'visualizacao.html';
+            }
         } else {
             // Se não tem grupo, vai para o cadastro do grupo
             window.location.href = 'cadastro-grupo.html';
