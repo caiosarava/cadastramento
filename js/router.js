@@ -96,7 +96,7 @@ export async function redirectToAppropriateScreen() {
                 // Verifica se o período de edição ainda está ativo
                 const now = new Date();
                 const startDate = new Date('2025-11-24T00:00:00');
-                const endDate = new Date('2026-03-02T23:59:59');
+                const endDate = new Date('2026-03-011T23:59:59');
                 
                 if (now < startDate || now > endDate) {
                     // Período de edição encerrado, vai para visualização sem edição
