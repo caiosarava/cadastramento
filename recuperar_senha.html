@@ -118,11 +118,19 @@
             setLoading(true);
 
             try {
-                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                console.log('Iniciando recuperação de senha para:', email);
+                console.log('Redirect URL:', getBaseUrl() + '/redefinir_senha.html');
+
+                const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
                     redirectTo: getBaseUrl() + '/redefinir_senha.html'
                 });
 
-                if (error) throw error;
+                console.log('Resposta do Supabase:', { data, error });
+
+                if (error) {
+                    console.error('Erro do Supabase:', error);
+                    throw error;
+                }
 
                 displayStatus('✅ Link de recuperação enviado! Verifique seu email (inclusive a pasta de spam).', 'bg-green-100 text-green-700');
                 elements.form.reset();
@@ -140,6 +148,8 @@
                     errorMessage = 'Email não encontrado no sistema.';
                 } else if (error.message.includes('Invalid')) {
                     errorMessage = 'Email inválido.';
+                } else if (error.message.includes('rate')) {
+                    errorMessage = 'Muitas tentativas. Tente novamente em alguns minutos.';
                 }
 
                 displayStatus(`Erro: ${errorMessage}`, 'bg-red-100 text-red-700', 5000);
