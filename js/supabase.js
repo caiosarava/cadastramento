@@ -1,6 +1,16 @@
 export const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnYXJjY3BybXZncXN2aXZuZXJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTE2NTQ1OSwiZXhwIjoyMDc0NzQxNDU5fQ.CIZo0X0ua2teiR4zfUJnSA1WfOP_HFzDZPA0dBjsGtY';
 
+// Base URL for authentication redirects
+export const getBaseUrl = () => {
+    const origin = window.location.origin;
+    // Se for file://, usa localhost como fallback para testes locais
+    if (origin === 'file://') {
+        return 'http://localhost:3000';
+    }
+    return origin;
+};
+
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.44.4/+esm';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
