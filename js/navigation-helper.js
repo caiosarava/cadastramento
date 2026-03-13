@@ -220,6 +220,15 @@ export class NavigationHelper {
     }
 
     /**
+     * Redireciona mantendo a flag de que veio de admin
+     * Útil para manter permissões de edição mesmo após o período expirar
+     */
+    static redirectFromAdmin(url) {
+        sessionStorage.setItem('fromAdmin', 'true');
+        window.location.href = url;
+    }
+
+    /**
      * Exibe loading em um botão
      */
     static setButtonLoading(buttonId, isLoading, loadingText = 'Carregando...') {
