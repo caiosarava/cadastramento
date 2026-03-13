@@ -1111,10 +1111,27 @@
     }
 
     document.getElementById('logoutButton').addEventListener('click', async function() {
+      // Marca que o usuário está vindo de admin para manter acesso de edição
+      sessionStorage.setItem('fromAdmin', 'true');
       await supabase.auth.signOut();
+      // Agora limpa o sessionStorage mantendo a flag fromAdmin
+      const fromAdminFlag = sessionStorage.getItem('fromAdmin');
       sessionStorage.clear();
+      // Restaura a flag após limpar
+      if (fromAdminFlag) {
+        sessionStorage.setItem('fromAdmin', 'true');
+      }
       window.location.href = 'index.html';
     });
+
+    /**
+     * Função auxiliar para redirecionar desde a página de admin
+     * Mantém a flag fromAdmin ao redirecionar
+     */
+    window.redirectFromAdmin = function(url) {
+      sessionStorage.setItem('fromAdmin', 'true');
+      window.location.href = url;
+    };
 
     document.getElementById('addMemberButton').addEventListener('click', function() {
       if (currentGroup) {
