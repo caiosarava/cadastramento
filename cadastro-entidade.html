@@ -49,7 +49,7 @@
             
             <!-- Formulário de Adição de Entidade -->
             <div id="entity-add-form" class="p-4 mb-4 border border-blue-300 rounded-lg bg-white">
-                <h3 class="font-semibold text-blue-700 mb-3">Adicionar Informações da Entidade <span class="text-red-500 font-normal text-sm">(* Campos obrigatórios)</span></h3>
+                <h3 class="font-semibold text-blue-700 mb-3">Adicionar Informações do Membro <span class="text-red-500 font-normal text-sm">(* Campos obrigatórios)</span></h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     
                     <div class="lg:col-span-2">
@@ -142,11 +142,6 @@
                         <label for="entityRole" class="block text-xs font-medium text-gray-700">Qual sua função dentro da entidade? (Ex: Coordenador, Financeiro) <span class="text-red-500 font-bold">*</span></label>
                         <input type="text" id="entityRole" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
                     </div>
-
-                    <div class="lg:col-span-3">
-                        <label for="entityProducts" class="block text-xs font-medium text-gray-700">Quais produtos ou serviços oferecem? <span class="text-red-500 font-bold">*</span></label>
-                        <input type="text" id="entityProducts" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
-                    </div>
                     
                     <div class="lg:col-span-3">
                         <label for="entitySolidarityInvolvement" class="block text-xs font-medium text-gray-700">Qual seu envolvimento com o movimento da Economia Solidária? <span class="text-red-500 font-bold">*</span></label>
@@ -165,17 +160,17 @@
 
                     <div class="col-span-full">
                         <button type="button" onclick="addEntity()" id="addEntityButton" disabled class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition text-sm font-semibold opacity-50">
-                            + Adicionar Entidade
+                            + Adicionar Membro
                         </button>
                     </div>
                 </div>
             </div>
 
             <!-- Lista de Entidades Adicionadas -->
-            <h3 class="font-semibold text-gray-700 mb-3 mt-6">Entidades Cadastradas (<span id="entity-count">0</span>)</h3>
+            <h3 class="font-semibold text-gray-700 mb-3 mt-6">Membros Cadastrados (<span id="entity-count">0</span>)</h3>
             <div id="entity-list-container" class="space-y-3">
                 <p id="no-entities-message" class="text-sm text-gray-500 p-4 border rounded-md bg-white">
-                    Nenhuma entidade adicionada ainda. Use o formulário acima para começar.
+                    Nenhum membro adicionado ainda. Use o formulário acima para começar.
                 </p>
             </div>
         </section>
@@ -197,7 +192,7 @@
             </button>
             
             <div class="flex flex-col items-end gap-2">
-                <p id="save-status" class="text-sm text-gray-600">⚠️ Adicione pelo menos uma entidade para finalizar.</p>
+                <p id="save-status" class="text-sm text-gray-600">⚠️ Adicione pelo menos um membro para finalizar.</p>
                 <button type="button" onclick="finalizeCadastro()" id="finalize-button" class="btn-primary text-white py-3 px-8 rounded-full font-bold shadow-lg hover:shadow-xl transition duration-200 flex items-center justify-center" disabled>
                     <svg id="save-icon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -391,7 +386,6 @@
             { id: 'entityEthnicity', label: 'Etnia / Cor', required: true, type: 'select' },
             { id: 'entityEducation', label: 'Escolaridade', required: true, type: 'select' },
             { id: 'entityRole', label: 'Função dentro da entidade', required: true },
-            { id: 'entityProducts', label: 'Produtos ou serviços', required: true },
             { id: 'entitySolidarityInvolvement', label: 'Envolvimento com EcoSol', required: true },
         ];
         
@@ -465,7 +459,6 @@
             gender: getValFromSelect('entityGender'),
             ethnicity: getValFromSelect('entityEthnicity'),
             entityRole: getVal('entityRole'),
-            entityProducts: getVal('entityProducts'),
             solidarityInvolvement: getVal('entitySolidarityInvolvement'),
         };
 
@@ -543,12 +536,13 @@
                 member_household_size: null,
                 member_segment: null,
                 member_role: entity.entityRole,
-                member_products: entity.entityProducts,
+                member_products: null,
                 member_raw_materials: null,
                 member_monthly_income: null,
                 member_solidarity_involvement: entity.solidarityInvolvement,
                 member_other_activity_toggle: null,
                 member_other_activity: null,
+                type: 'entity',
             }));
 
             const { error } = await supabase
