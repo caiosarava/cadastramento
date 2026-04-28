@@ -1,4 +1,4 @@
-import { supabase } from './supabase.js';
+﻿import { supabase } from './supabase.js';
 
 let currentMode = 'login';
 const elements = {
@@ -36,8 +36,8 @@ function toggleAuthMode() {
     elements.formTitle.textContent = currentMode === 'login' ? 'Login' : 'Cadastro de Acesso';
     elements.buttonText.textContent = currentMode === 'login' ? 'Entrar' : 'Cadastrar Novo Grupo';
     elements.toggleModeButton.textContent = currentMode === 'login'
-        ? 'Ainda não tem acesso? Cadastrar Novo Grupo'
-        : 'Já tem acesso? Fazer Login';
+        ? 'Ainda nÃ£o tem acesso? Cadastrar Novo Grupo'
+        : 'JÃ¡ tem acesso? Fazer Login';
 }
 
 async function checkIfHasGroup(userId) {
@@ -51,21 +51,21 @@ async function checkIfHasGroup(userId) {
         if (error) throw error;
 
         if (groupData) {
-            // Se já tem um grupo cadastrado, vai para visualização
-            // Verifica se o período de edição ainda está ativo
+            // Se jÃ¡ tem um grupo cadastrado, vai para visualizaÃ§Ã£o
+            // Verifica se o perÃ­odo de ediÃ§Ã£o ainda estÃ¡ ativo
             const now = new Date();
-            const startDate = new Date('2025-11-24T00:00:00');
-            const endDate = new Date('2026-03-11T23:59:59');
+            const startDate = new Date('2026-07-01T00:00:00');
+            const endDate = new Date('2026-07-31T23:59:59');
             
             if (now < startDate || now > endDate) {
-                // Período de edição encerrado, vai para visualização sem edição
+                // PerÃ­odo de ediÃ§Ã£o encerrado, vai para visualizaÃ§Ã£o sem ediÃ§Ã£o
                 window.location.href = 'visualizacao_sem_edicao.html';
             } else {
-                // Ainda está no período de edição, vai para visualização com edição
+                // Ainda estÃ¡ no perÃ­odo de ediÃ§Ã£o, vai para visualizaÃ§Ã£o com ediÃ§Ã£o
                 window.location.href = 'visualizacao.html';
             }
         } else {
-            // Se não tem grupo, vai para o cadastro do grupo
+            // Se nÃ£o tem grupo, vai para o cadastro do grupo
             window.location.href = 'cadastro-grupo.html';
         }
     } catch (err) {
@@ -105,8 +105,8 @@ async function handleAuth(e) {
             setLoading(false);
         }
     } catch (error) {
-        console.error("Erro de Autenticação:", error.message);
-        displayStatus(`❌ Erro: ${error.message}`, 'bg-red-100 text-red-700', 5000);
+        console.error("Erro de AutenticaÃ§Ã£o:", error.message);
+        displayStatus(`âŒ Erro: ${error.message}`, 'bg-red-100 text-red-700', 5000);
         setLoading(false);
     }
 }
@@ -124,8 +124,8 @@ async function redirectIfNotLoggedIn() {
 
         return user;
     } catch (err) {
-        console.error('Erro ao verificar autenticação:', err);
-        displayStatus(`Erro ao verificar autenticação: ${err.message}`, 'bg-red-100 text-red-700');
+        console.error('Erro ao verificar autenticaÃ§Ã£o:', err);
+        displayStatus(`Erro ao verificar autenticaÃ§Ã£o: ${err.message}`, 'bg-red-100 text-red-700');
         window.location.href = 'login.html';
         return null;
     }

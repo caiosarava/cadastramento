@@ -78,6 +78,15 @@
                     <label for="headquartersAddress" class="block text-sm font-medium text-gray-700">Endereço da Sede Própria (Rua, Nº, Bairro, Cidade, Estado)</label>
                     <input type="text" id="headquartersAddress" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
                 </div>
+
+                <div class="mb-4">
+                    <label for="groupSegment" class="block text-sm font-medium text-gray-700">Qual segmento? <span class="text-red-500">*</span></label>
+                    <select id="groupSegment" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                        <option value="" disabled selected>Selecione o segmento</option>
+                        <option value="Empreendimento Econômico Solidário">Empreendimento Econômico Solidário</option>
+                        <option value="Entidade de Apoio e Fomento">Entidade de Apoio e Fomento</option>
+                    </select>
+                </div>
                 
             </section>
 
@@ -204,10 +213,11 @@
         const groupContact = getVal('groupContact');
         const groupPhone = getVal('groupPhone');
         const groupRepresentativeName = getVal('groupRepresentativeName');
+        const groupSegment = getVal('groupSegment');
         const hasOwnHeadquarters = document.getElementById('hasOwnHeadquarters')?.value === 'Sim';
         const headquartersAddress = (hasOwnHeadquarters && getVal('headquartersAddress')) ? getVal('headquartersAddress') : null;
 
-        if (!groupName || !groupContact || !groupPhone || !groupRepresentativeName) {
+        if (!groupName || !groupContact || !groupPhone || !groupRepresentativeName || !groupSegment) {
             customAlert("Campos Obrigatórios", "Por favor, preencha todos os campos obrigatórios.", true);
             return;
         }
@@ -238,6 +248,7 @@
                 phone: groupPhone,
                 has_headquarters: hasOwnHeadquarters,
                 headquarters_address: headquartersAddress,
+                group_segment: groupSegment,
                 user_id: user.id,
             };
 
@@ -271,8 +282,13 @@
             // Armazenar o ID do grupo no sessionStorage para usar na próxima página
             sessionStorage.setItem('currentGroupId', groupId);
 
+            // Redirecionar baseado no segmento selecionado
+            const redirectUrl = groupSegment === 'Entidade de Apoio e Fomento' 
+                ? 'cadastro-entidade.html' 
+                : 'cadastro-membro.html';
+
             setTimeout(() => {
-                window.location.href = 'cadastro-membro.html';
+                window.location.href = redirectUrl;
             }, 1000);
 
         } catch (error) {

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -31,7 +31,7 @@
     <div class="card bg-white p-8 md:p-10 rounded-xl w-full max-w-md">
         <header class="text-center mb-8">
             <h1 class="text-3xl font-bold text-green-700">COMESOL</h1>
-            <p class="text-gray-500 mt-1">Sistema de Cadastro de Grupos de Economia Solidária</p>
+            <p class="text-gray-500 mt-1">Sistema de Cadastro de Grupos de Economia SolidÃ¡ria</p>
         </header>
 
         <div id="statusMessage" class="hidden p-3 mb-4 rounded-lg text-sm text-center" role="alert"></div>
@@ -43,7 +43,7 @@
             </div>
             <div>
                 <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-                <input type="password" id="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="••••••••">
+                <input type="password" id="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
             </div>
 
             <button type="submit" id="authButton" class="btn-primary w-full text-white font-semibold py-2.5 rounded-lg flex items-center justify-center shadow-md">
@@ -65,7 +65,7 @@
             </div>
             <div>
                 <a href="registro.html" class="text-sm text-green-600 hover:text-green-800 transition duration-150 font-medium">
-                    Ainda não tem acesso? Criar conta
+                    Ainda nÃ£o tem acesso? Criar conta
                 </a>
             </div>
         </div>
@@ -123,30 +123,30 @@
                 if (error) throw error;
 
                 if (groupData) {
-                    // Já tem grupo cadastrado, vai para visualização
+                    // JÃ¡ tem grupo cadastrado, vai para visualizaÃ§Ã£o
                     // Verifica se veio de redirecionamento de admin
                     const isFromAdmin = sessionStorage.getItem('fromAdmin');
                     
                     if (isFromAdmin) {
-                        // Veio de admin, vai para visualização com edição independente da data
+                        // Veio de admin, vai para visualizaÃ§Ã£o com ediÃ§Ã£o independente da data
                         sessionStorage.removeItem('fromAdmin');
                         window.location.href = 'visualizacao.html';
                     } else {
-                        // Verificar se o período de edição ainda está ativo
+                        // Verificar se o perÃ­odo de ediÃ§Ã£o ainda estÃ¡ ativo
                         const now = new Date();
-                        const startDate = new Date('2025-11-24T00:00:00');
-                        const endDate = new Date('2026-03-11T23:59:59');
+                        const startDate = new Date('2026-07-01T00:00:00');
+                        const endDate = new Date('2026-07-31T23:59:59');
                         
                         if (now < startDate || now > endDate) {
-                            // Período de edição encerrado, vai para visualização sem edição
+                            // PerÃ­odo de ediÃ§Ã£o encerrado, vai para visualizaÃ§Ã£o sem ediÃ§Ã£o
                             window.location.href = 'visualizacao_sem_edicao.html';
                         } else {
-                            // Ainda está no período de edição, vai para visualização com edição
+                            // Ainda estÃ¡ no perÃ­odo de ediÃ§Ã£o, vai para visualizaÃ§Ã£o com ediÃ§Ã£o
                             window.location.href = 'visualizacao.html';
                         }
                     }
                 } else {
-                    // Não tem grupo, vai para cadastro do grupo
+                    // NÃ£o tem grupo, vai para cadastro do grupo
                     window.location.href = 'cadastro-grupo.html';
                 }
             } catch (err) {
@@ -188,7 +188,7 @@
 
         elements.form.addEventListener('submit', handleLogin);
 
-        // Verifica se já está autenticado ao carregar a página
+        // Verifica se jÃ¡ estÃ¡ autenticado ao carregar a pÃ¡gina
         window.addEventListener('DOMContentLoaded', async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
