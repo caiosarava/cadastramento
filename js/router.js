@@ -1,19 +1,19 @@
-import { redirectIfNotLoggedIn, checkIfHasGroup } from './auth.js';
+﻿import { redirectIfNotLoggedIn, checkIfHasGroup } from './auth.js';
 import { supabase } from './supabase.js';
 
 /**
- * Verifica se o usuário está autenticado e redireciona adequadamente
+ * Verifica se o usuÃ¡rio estÃ¡ autenticado e redireciona adequadamente
  */
 export async function checkUserAndRedirect() {
     const user = await redirectIfNotLoggedIn();
     if (user) {
-        // Se o usuário estiver autenticado, verifica se tem grupo
+        // Se o usuÃ¡rio estiver autenticado, verifica se tem grupo
         await checkIfHasGroup(user.id);
     }
 }
 
 /**
- * Verifica se o usuário tem um grupo cadastrado
+ * Verifica se o usuÃ¡rio tem um grupo cadastrado
  * @returns {Promise<object|null>} Retorna o grupo ou null
  */
 export async function checkUserHasGroup() {
@@ -41,7 +41,7 @@ export async function checkUserHasGroup() {
 }
 
 /**
- * Redireciona para a página de cadastro de grupo se não tiver grupo
+ * Redireciona para a pÃ¡gina de cadastro de grupo se nÃ£o tiver grupo
  */
 export async function ensureGroupExists() {
     const group = await checkUserHasGroup();
@@ -55,7 +55,7 @@ export async function ensureGroupExists() {
 }
 
 /**
- * Redireciona para a página apropriada baseado no estado do cadastro
+ * Redireciona para a pÃ¡gina apropriada baseado no estado do cadastro
  */
 export async function redirectToAppropriateScreen() {
     try {
@@ -75,7 +75,7 @@ export async function redirectToAppropriateScreen() {
         if (groupError) throw groupError;
 
         if (!group) {
-            // Não tem grupo, vai para cadastro do grupo
+            // NÃ£o tem grupo, vai para cadastro do grupo
             window.location.href = 'cadastro-grupo.html';
         } else {
             // Tem grupo, verifica se tem membros
@@ -88,29 +88,29 @@ export async function redirectToAppropriateScreen() {
             if (membersError) throw membersError;
 
             if (!members || members.length === 0) {
-                // Tem grupo mas não tem membros, vai para cadastro de membros
+                // Tem grupo mas nÃ£o tem membros, vai para cadastro de membros
                 sessionStorage.setItem('currentGroupId', group.id);
                 window.location.href = 'cadastro-membro.html';
             } else {
-                // Tem grupo e membros, vai para visualização
+                // Tem grupo e membros, vai para visualizaÃ§Ã£o
                 // Verifica se veio de redirecionamento de admin
                 const isFromAdmin = sessionStorage.getItem('fromAdmin');
                 
                 if (isFromAdmin) {
-                    // Veio de admin, vai para visualização com edição independente da data
+                    // Veio de admin, vai para visualizaÃ§Ã£o com ediÃ§Ã£o independente da data
                     sessionStorage.removeItem('fromAdmin');
                     window.location.href = 'visualizacao.html';
                 } else {
-                    // Verifica se o período de edição ainda está ativo
+                    // Verifica se o perÃ­odo de ediÃ§Ã£o ainda estÃ¡ ativo
                     const now = new Date();
-                    const startDate = new Date('2025-11-24T00:00:00');
-                    const endDate = new Date('2026-03-11T23:59:59');
+                    const startDate = new Date('2026-07-01T00:00:00');
+                    const endDate = new Date('2026-07-31T23:59:59');
                     
                     if (now < startDate || now > endDate) {
-                        // Período de edição encerrado, vai para visualização sem edição
+                        // PerÃ­odo de ediÃ§Ã£o encerrado, vai para visualizaÃ§Ã£o sem ediÃ§Ã£o
                         window.location.href = 'visualizacao_sem_edicao.html';
                     } else {
-                        // Ainda está no período de edição, vai para visualização com edição
+                        // Ainda estÃ¡ no perÃ­odo de ediÃ§Ã£o, vai para visualizaÃ§Ã£o com ediÃ§Ã£o
                         window.location.href = 'visualizacao.html';
                     }
                 }
