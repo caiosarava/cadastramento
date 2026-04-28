@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -38,7 +38,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">COMESOL - Dashboard Admin</h1>
-                <p class="text-sm text-gray-600">Painel de Controle e Estatísticas</p>
+                <p class="text-sm text-gray-600">Painel de Controle e Estatí­sticas</p>
             </div>
             <button id="logoutButton" class="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition duration-200 flex items-center font-semibold">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,7 +60,7 @@
             </div>
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
-                <input type="password" id="adminPassword" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="••••••••">
+                <input type="password" id="adminPassword" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="senha">
             </div>
             <button onclick="adminLogin()" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition font-semibold">
                 Entrar como Admin
@@ -133,6 +133,12 @@
                 </div>
             </div>
 
+            <!-- Group Filter -->
+            <div class="card bg-white p-6 rounded-xl mb-8 no-print">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Filtrar por Grupo</h3>
+                <div id="groupFilterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="flex gap-4 mb-8 no-print">
                 <button onclick="exportToCSV()" class="bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition font-semibold flex items-center">
@@ -199,6 +205,14 @@
                         <canvas id="segmentChart"></canvas>
                     </div>
                 </div>
+
+                <div class="card bg-white p-6 rounded-xl">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Membros por Grupo</h3>
+                    <div class="chart-container">
+                        <canvas id="groupMembersChart"></canvas>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Top Products/Services -->
@@ -211,7 +225,7 @@
 
             <!-- Top Raw Materials -->
             <div class="card bg-white p-6 rounded-xl mb-8">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Matérias-Primas Mais Utilizadas</h3>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Materias-Primas Mais Utilizadas</h3>
                 <div id="topMaterials" class="space-y-2">
                     <!-- Will be populated dynamically -->
                 </div>
@@ -229,7 +243,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefone</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Membros</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider no-print">Ações</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider no-print">AÃ§Ãµes</th>
                             </tr>
                         </thead>
                         <tbody id="groupsTableBody" class="bg-white divide-y divide-gray-200">
@@ -246,25 +260,22 @@
 
         const SUPABASE_URL = 'https://egarccprmvgqsvivnerc.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnYXJjY3BybXZncXN2aXZuZXJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTE2NTQ1OSwiZXhwIjoyMDc0NzQxNDU5fQ.CIZo0X0ua2teiR4zfUJnSA1WfOP_HFzDZPA0dBjsGtY';
-        
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let allGroups = [];
         let allMembers = [];
         let charts = {};
+        let selectedGroupId = null;
 
-        // Admin Login
         window.adminLogin = async function() {
             const email = document.getElementById('adminEmail').value.trim();
             const password = document.getElementById('adminPassword').value;
             const errorDiv = document.getElementById('loginError');
-
             if (!email || !password) {
                 errorDiv.textContent = 'Preencha todos os campos';
                 errorDiv.classList.remove('hidden');
                 return;
             }
-
             if (email === 'daes.ecosol@gmail.com' && password === 'olimpicodaes1') {
                 document.getElementById('loginModal').classList.add('hidden');
                 document.getElementById('mainContent').classList.remove('hidden');
@@ -275,66 +286,75 @@
             }
         };
 
-        // Load all data
         async function loadAllData() {
             try {
-                // Load groups
-                const { data: groups, error: groupsError } = await supabase
-                    .from('groups')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
+                const { data: groups, error: groupsError } = await supabase.from('groups').select('*').order('created_at', { ascending: false });
                 if (groupsError) throw groupsError;
                 allGroups = groups || [];
 
-                // Load members
-                const { data: members, error: membersError } = await supabase
-                    .from('members')
-                    .select('*');
-
+                const { data: members, error: membersError } = await supabase.from('members').select('*');
                 if (membersError) throw membersError;
                 allMembers = members || [];
 
-                displayStats();
-                createCharts();
-                displayTopItems();
-                displayGroupsTable();
-
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('statsSection').classList.remove('hidden');
+
+                renderGroupFilterButtons();
+                await applyGroupFilter(null);
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
                 alert('Erro ao carregar dados: ' + error.message);
             }
         }
 
-        // Display statistics
-        function displayStats() {
-            document.getElementById('totalGroups').textContent = allGroups.length;
-            document.getElementById('totalMembers').textContent = allMembers.length;
-            
-            const groupsWithHQ = allGroups.filter(g => g.has_headquarters).length;
-            document.getElementById('groupsWithHQ').textContent = groupsWithHQ;
-            
-            const avgMembers = allGroups.length > 0 
-                ? (allMembers.length / allGroups.length).toFixed(1)
-                : 0;
-            document.getElementById('avgMembers').textContent = avgMembers;
+        function getFilteredMembers() {
+            if (!selectedGroupId) return allMembers;
+            return allMembers.filter((m) => m.group_id === selectedGroupId);
         }
 
-        // Calculate age from birthdate
+        async function applyGroupFilter(groupId) {
+            selectedGroupId = groupId;
+            const filteredMembers = getFilteredMembers();
+            displayStats(filteredMembers);
+            createCharts(filteredMembers);
+            displayTopItems(filteredMembers);
+            displayGroupsTable();
+            renderGroupFilterButtons();
+        }
+
+        function renderGroupFilterButtons() {
+            const container = document.getElementById('groupFilterGrid');
+            const buttons = [];
+            const isAll = selectedGroupId === null;
+            buttons.push('<button data-group-id="" class="group-filter-btn px-4 py-3 rounded-lg border text-left font-semibold transition ' + (isAll ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:text-blue-700') + '">Todos os grupos</button>');
+            allGroups.forEach((group) => {
+                const active = selectedGroupId === group.id;
+                buttons.push('<button data-group-id="' + group.id + '" class="group-filter-btn px-4 py-3 rounded-lg border text-left font-semibold transition ' + (active ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:text-blue-700') + '">' + (group.group_name || 'Grupo sem nome') + '</button>');
+            });
+            container.innerHTML = buttons.join('');
+            container.querySelectorAll('.group-filter-btn').forEach((button) => {
+                button.addEventListener('click', () => applyGroupFilter(button.getAttribute('data-group-id') || null));
+            });
+        }
+
+        function displayStats(members) {
+            const groupsForAvg = selectedGroupId ? 1 : allGroups.length;
+            document.getElementById('totalGroups').textContent = selectedGroupId ? 1 : allGroups.length;
+            document.getElementById('totalMembers').textContent = members.length;
+            const groupsWithHQ = selectedGroupId ? allGroups.filter((g) => g.id === selectedGroupId && g.has_headquarters).length : allGroups.filter((g) => g.has_headquarters).length;
+            document.getElementById('groupsWithHQ').textContent = groupsWithHQ;
+            document.getElementById('avgMembers').textContent = groupsForAvg > 0 ? (members.length / groupsForAvg).toFixed(1) : '0';
+        }
+
         function calculateAge(birthDate) {
             const today = new Date();
             const birth = new Date(birthDate);
             let age = today.getFullYear() - birth.getFullYear();
             const monthDiff = today.getMonth() - birth.getMonth();
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-                age--;
-            }
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
             return age;
         }
 
-        // Get age range
         function getAgeRange(age) {
             if (age < 18) return 'Menor de 18';
             if (age < 25) return '18-24';
@@ -345,357 +365,117 @@
             return '65+';
         }
 
-        // Create charts
-        function createCharts() {
-            // Gender distribution
-            const genderCounts = {};
-            allMembers.forEach(m => {
-                const gender = m.member_gender || 'Não informado';
-                genderCounts[gender] = (genderCounts[gender] || 0) + 1;
-            });
+        function destroyCharts() {
+            Object.values(charts).forEach((chart) => chart && chart.destroy && chart.destroy());
+            charts = {};
+        }
 
-            charts.gender = new Chart(document.getElementById('genderChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(genderCounts),
-                    datasets: [{
-                        data: Object.values(genderCounts),
-                        backgroundColor: [
-                            '#FF6384',
-                            '#36A2EB',
-                            '#FFCE56',
-                            '#4BC0C0',
-                            '#9966FF',
-                            '#FF9F40'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
+        function countBy(members, key, fallback = 'Não informado') {
+            const counts = {};
+            members.forEach((m) => {
+                const v = m[key] || fallback;
+                counts[v] = (counts[v] || 0) + 1;
             });
+            return counts;
+        }
 
-            // Education distribution
-            const educationCounts = {};
-            allMembers.forEach(m => {
-                const edu = m.member_education || 'Não informado';
-                educationCounts[edu] = (educationCounts[edu] || 0) + 1;
-            });
+        function createCharts(members) {
+            destroyCharts();
+            const genderCounts = countBy(members, 'member_gender');
+            charts.gender = new Chart(document.getElementById('genderChart'), { type: 'doughnut', data: { labels: Object.keys(genderCounts), datasets: [{ data: Object.values(genderCounts), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
 
-            charts.education = new Chart(document.getElementById('educationChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(educationCounts),
-                    datasets: [{
-                        label: 'Quantidade',
-                        data: Object.values(educationCounts),
-                        backgroundColor: '#36A2EB'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
+            const educationCounts = countBy(members, 'member_education');
+            charts.education = new Chart(document.getElementById('educationChart'), { type: 'bar', data: { labels: Object.keys(educationCounts), datasets: [{ label: 'Quantidade', data: Object.values(educationCounts), backgroundColor: '#36A2EB' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
 
-            // Income distribution
-            const incomeCounts = {};
-            allMembers.forEach(m => {
-                const income = m.member_monthly_income || 'Não informado';
-                incomeCounts[income] = (incomeCounts[income] || 0) + 1;
-            });
+            const incomeCounts = countBy(members, 'member_monthly_income');
+            charts.income = new Chart(document.getElementById('incomeChart'), { type: 'bar', data: { labels: Object.keys(incomeCounts), datasets: [{ label: 'Quantidade', data: Object.values(incomeCounts), backgroundColor: '#4BC0C0' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
 
-            charts.income = new Chart(document.getElementById('incomeChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(incomeCounts),
-                    datasets: [{
-                        label: 'Quantidade',
-                        data: Object.values(incomeCounts),
-                        backgroundColor: '#4BC0C0'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
+            const ethnicityCounts = countBy(members, 'member_ethnicity');
+            charts.ethnicity = new Chart(document.getElementById('ethnicityChart'), { type: 'pie', data: { labels: Object.keys(ethnicityCounts), datasets: [{ data: Object.values(ethnicityCounts), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
 
-            // Ethnicity distribution
-            const ethnicityCounts = {};
-            allMembers.forEach(m => {
-                const eth = m.member_ethnicity || 'Não informado';
-                ethnicityCounts[eth] = (ethnicityCounts[eth] || 0) + 1;
-            });
-
-            charts.ethnicity = new Chart(document.getElementById('ethnicityChart'), {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(ethnicityCounts),
-                    datasets: [{
-                        data: Object.values(ethnicityCounts),
-                        backgroundColor: [
-                            '#FF6384',
-                            '#36A2EB',
-                            '#FFCE56',
-                            '#4BC0C0',
-                            '#9966FF'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-
-            // Age distribution
             const ageCounts = {};
-            allMembers.forEach(m => {
-                if (m.member_birth_date) {
-                    const age = calculateAge(m.member_birth_date);
-                    const range = getAgeRange(age);
-                    ageCounts[range] = (ageCounts[range] || 0) + 1;
-                }
+            members.forEach((m) => {
+                if (!m.member_birth_date) return;
+                const range = getAgeRange(calculateAge(m.member_birth_date));
+                ageCounts[range] = (ageCounts[range] || 0) + 1;
             });
-
             const ageRanges = ['Menor de 18', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
-            const ageData = ageRanges.map(range => ageCounts[range] || 0);
+            charts.age = new Chart(document.getElementById('ageChart'), { type: 'bar', data: { labels: ageRanges, datasets: [{ label: 'Quantidade', data: ageRanges.map((r) => ageCounts[r] || 0), backgroundColor: '#9966FF' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
 
-            charts.age = new Chart(document.getElementById('ageChart'), {
-                type: 'bar',
-                data: {
-                    labels: ageRanges,
-                    datasets: [{
-                        label: 'Quantidade',
-                        data: ageData,
-                        backgroundColor: '#9966FF'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
+            const activityCounts = { Sim: 0, Não: 0 };
+            members.forEach((m) => {
+                const v = m.member_other_activity_toggle || 'Não';
+                if (!Object.prototype.hasOwnProperty.call(activityCounts, v)) activityCounts[v] = 0;
+                activityCounts[v] += 1;
             });
+            charts.activity = new Chart(document.getElementById('otherActivityChart'), { type: 'doughnut', data: { labels: Object.keys(activityCounts), datasets: [{ data: Object.values(activityCounts), backgroundColor: ['#FF9F40', '#4BC0C0', '#8B5CF6'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
 
-            // Other activity
-            const activityCounts = { 'Sim': 0, 'Não': 0 };
-            allMembers.forEach(m => {
-                const activity = m.member_other_activity_toggle || 'Não';
-                activityCounts[activity]++;
-            });
+            const segmentCounts = countBy(members, 'member_segment');
+            charts.segment = new Chart(document.getElementById('segmentChart'), { type: 'bar', data: { labels: Object.keys(segmentCounts), datasets: [{ label: 'Quantidade', data: Object.values(segmentCounts), backgroundColor: '#FF6384' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
 
-            charts.activity = new Chart(document.getElementById('otherActivityChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(activityCounts),
-                    datasets: [{
-                        data: Object.values(activityCounts),
-                        backgroundColor: ['#FF9F40', '#4BC0C0']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-
-            // Member Segment distribution
-            const segmentCounts = {};
-            allMembers.forEach(m => {
-                const segment = m.member_segment || 'Não informado';
-                segmentCounts[segment] = (segmentCounts[segment] || 0) + 1;
-            });
-
-            charts.segment = new Chart(document.getElementById('segmentChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(segmentCounts),
-                    datasets: [{
-                        label: 'Quantidade',
-                        data: Object.values(segmentCounts),
-                        backgroundColor: '#FF6384'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
+            const labels = selectedGroupId ? allGroups.filter((g) => g.id === selectedGroupId).map((g) => g.group_name) : allGroups.map((g) => g.group_name);
+            const values = selectedGroupId ? [members.length] : allGroups.map((g) => members.filter((m) => m.group_id === g.id).length);
+            charts.groupMembers = new Chart(document.getElementById('groupMembersChart'), { type: 'bar', data: { labels, datasets: [{ label: 'Membros', data: values, backgroundColor: '#2563EB' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
         }
 
-        // Display top products and materials
-        function displayTopItems() {
-            // Products
-            const productCounts = {};
-            allMembers.forEach(m => {
-                if (m.member_products) {
-                    const products = m.member_products.split(',').map(p => p.trim().toLowerCase());
-                    products.forEach(p => {
-                        if (p) productCounts[p] = (productCounts[p] || 0) + 1;
-                    });
-                }
+        function displayTopItems(members) {
+            const products = {};
+            const materials = {};
+            members.forEach((m) => {
+                if (m.member_products) m.member_products.split(',').map((v) => v.trim().toLowerCase()).filter(Boolean).forEach((v) => products[v] = (products[v] || 0) + 1);
+                if (m.member_raw_materials) m.member_raw_materials.split(',').map((v) => v.trim().toLowerCase()).filter(Boolean).forEach((v) => materials[v] = (materials[v] || 0) + 1);
             });
 
-            const topProducts = Object.entries(productCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10);
+            const topProducts = Object.entries(products).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            document.getElementById('topProducts').innerHTML = (topProducts.map(([name, count], idx) => '<div class="flex justify-between items-center py-2 px-4 bg-gray-50 rounded-lg"><span class="font-medium text-gray-700">' + (idx + 1) + '. ' + (name.charAt(0).toUpperCase() + name.slice(1)) + '</span><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">' + count + '</span></div>').join('')) || '<p class="text-gray-500">Nenhum produto cadastrado</p>';
 
-            const productsHTML = topProducts.map(([product, count], index) => `
-                <div class="flex justify-between items-center py-2 px-4 bg-gray-50 rounded-lg">
-                    <span class="font-medium text-gray-700">${index + 1}. ${product.charAt(0).toUpperCase() + product.slice(1)}</span>
-                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">${count}</span>
-                </div>
-            `).join('');
-
-            document.getElementById('topProducts').innerHTML = productsHTML || '<p class="text-gray-500">Nenhum produto cadastrado</p>';
-
-            // Materials
-            const materialCounts = {};
-            allMembers.forEach(m => {
-                if (m.member_raw_materials) {
-                    const materials = m.member_raw_materials.split(',').map(mat => mat.trim().toLowerCase());
-                    materials.forEach(mat => {
-                        if (mat) materialCounts[mat] = (materialCounts[mat] || 0) + 1;
-                    });
-                }
-            });
-
-            const topMaterials = Object.entries(materialCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10);
-
-            const materialsHTML = topMaterials.map(([material, count], index) => `
-                <div class="flex justify-between items-center py-2 px-4 bg-gray-50 rounded-lg">
-                    <span class="font-medium text-gray-700">${index + 1}. ${material.charAt(0).toUpperCase() + material.slice(1)}</span>
-                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">${count}</span>
-                </div>
-            `).join('');
-
-            document.getElementById('topMaterials').innerHTML = materialsHTML || '<p class="text-gray-500">Nenhuma matéria-prima cadastrada</p>';
+            const topMaterials = Object.entries(materials).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            document.getElementById('topMaterials').innerHTML = (topMaterials.map(([name, count], idx) => '<div class="flex justify-between items-center py-2 px-4 bg-gray-50 rounded-lg"><span class="font-medium text-gray-700">' + (idx + 1) + '. ' + (name.charAt(0).toUpperCase() + name.slice(1)) + '</span><span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">' + count + '</span></div>').join('')) || '<p class="text-gray-500">Nenhuma matéria-prima cadastrada</p>';
         }
 
-        // Display groups table
         function displayGroupsTable() {
             const tbody = document.getElementById('groupsTableBody');
-            
-            const rows = allGroups.map(group => {
-                const memberCount = allMembers.filter(m => m.group_id === group.id).length;
-                return `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${group.group_name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${group.representative}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${group.email}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${group.phone}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${memberCount}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 no-print">
-                            <button onclick="viewGroupDetails('${group.id}')" class="text-blue-600 hover:text-blue-900 font-medium">Ver Detalhes</button>
-                        </td>
-                    </tr>
-                `;
+            const groupsToShow = selectedGroupId ? allGroups.filter((g) => g.id === selectedGroupId) : allGroups;
+            const rows = groupsToShow.map((group) => {
+                const memberCount = allMembers.filter((m) => m.group_id === group.id).length;
+                return '<tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">' + (group.group_name || '') + '</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (group.representative || '') + '</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (group.email || '') + '</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (group.phone || '') + '</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + memberCount + '</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 no-print"><button onclick="viewGroupDetails(\'' + group.id + '\')" class="text-blue-600 hover:text-blue-900 font-medium">Ver Detalhes</button></td></tr>';
             }).join('');
-
             tbody.innerHTML = rows || '<tr><td colspan="6" class="text-center py-4 text-gray-500">Nenhum grupo cadastrado</td></tr>';
         }
 
-        // View group details
         window.viewGroupDetails = function(groupId) {
             sessionStorage.setItem('adminViewGroupId', groupId);
             window.location.href = 'visualizacao_admin.html';
         };
 
-        // Export to CSV
         window.exportToCSV = function() {
             let csv = 'Grupo,Representante,Email,Telefone,Sede Própria,Membro,CPF,Email Membro,Telefone Membro,Data Nascimento,Gênero,Etnia,Escolaridade,Renda Mensal,Função,Produtos/Serviços,Matérias-Primas\n';
-            
-            allGroups.forEach(group => {
-                const members = allMembers.filter(m => m.group_id === group.id);
-                
+            allGroups.forEach((group) => {
+                const members = allMembers.filter((m) => m.group_id === group.id);
                 if (members.length === 0) {
-                    csv += `"${group.group_name}","${group.representative}","${group.email}","${group.phone}","${group.has_headquarters ? 'Sim' : 'Não'}","","","","","","","","","","","",""\n`;
+                    csv += '"' + group.group_name + '","' + group.representative + '","' + group.email + '","' + group.phone + '","' + (group.has_headquarters ? 'Sim' : 'Não') + '","","","","","","","","","","","",""\n';
                 } else {
-                    members.forEach(member => {
-                        csv += `"${group.group_name}","${group.representative}","${group.email}","${group.phone}","${group.has_headquarters ? 'Sim' : 'Não'}","${member.member_name}","${member.member_cpf}","${member.member_email}","${member.member_phone}","${member.member_birth_date || ''}","${member.member_gender || ''}","${member.member_ethnicity || ''}","${member.member_education || ''}","${member.member_monthly_income || ''}","${member.member_role || ''}","${member.member_products || ''}","${member.member_raw_materials || ''}"\n`;
+                    members.forEach((member) => {
+                        csv += '"' + group.group_name + '","' + group.representative + '","' + group.email + '","' + group.phone + '","' + (group.has_headquarters ? 'Sim' : 'Não') + '","' + (member.member_name || '') + '","' + (member.member_cpf || '') + '","' + (member.member_email || '') + '","' + (member.member_phone || '') + '","' + (member.member_birth_date || '') + '","' + (member.member_gender || '') + '","' + (member.member_ethnicity || '') + '","' + (member.member_education || '') + '","' + (member.member_monthly_income || '') + '","' + (member.member_role || '') + '","' + (member.member_products || '') + '","' + (member.member_raw_materials || '') + '"\n';
                     });
                 }
             });
-
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
-            
             link.setAttribute('href', url);
-            link.setAttribute('download', `comesol_dados_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute('download', 'comesol_dados_' + new Date().toISOString().split('T')[0] + '.csv');
             link.style.visibility = 'hidden';
-            
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         };
 
-        // Logout
         document.getElementById('logoutButton').addEventListener('click', async function() {
             await supabase.auth.signOut();
             window.location.reload();
         });
 
-        // Enter key to login
         document.getElementById('adminPassword').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 adminLogin();
