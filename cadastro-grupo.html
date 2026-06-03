@@ -89,15 +89,22 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="groupFiles" class="block text-sm font-medium text-gray-700">Envie aqui seus arquivos de atas, plano de trabalho e portfolio</label>
-                    <input type="file" id="groupFiles" multiple accept=".pdf,.docx,.jpg,.jpeg" class="mt-1 block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-md file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-green-50 file:text-green-700
-                        hover:file:bg-green-100
-                        border border-gray-300 rounded-md p-1">
-                    <p class="text-xs text-gray-500 mt-1">Formatos aceitos: .pdf, .docx, .jpeg (opcional)</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Envie aqui seus arquivos de atas, plano de trabalho e portfolio (opcional)</label>
+
+                    <div class="flex items-center gap-2 mb-3">
+                        <label for="groupFiles" class="cursor-pointer bg-green-50 text-green-700 px-4 py-2 rounded-md border border-green-200 hover:bg-green-100 transition text-sm font-semibold flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Selecionar Arquivos
+                        </label>
+                        <input type="file" id="groupFiles" multiple accept=".pdf,.docx,.jpg,.jpeg" class="hidden" onchange="handleFileSelection(event)">
+                        <span id="file-count-badge" class="hidden bg-green-600 text-white text-xs px-2 py-1 rounded-full">0</span>
+                    </div>
+
+                    <div id="file-list" class="space-y-2 mb-2">
+                        <!-- Lista de arquivos será inserida aqui -->
+                    </div>
+
+                    <p class="text-xs text-gray-500">Formatos aceitos: .pdf, .docx, .jpeg</p>
                 </div>
                 
             </section>
@@ -144,10 +151,15 @@
     // URL do Web App do Google Apps Script (preencher após o deploy)
     const GOOGLE_SCRIPT_URL = '';
 
+    // Lista acumulada de arquivos para upload
+    let selectedFiles = [];
+
     // Funções de utilidade
     window.customAlert = customAlert;
     window.closeCustomAlert = closeCustomAlert;
     window.toggleHeadquartersAddress = toggleHeadquartersAddress;
+    window.handleFileSelection = handleFileSelection;
+    window.removeFile = removeFile;
 
     function customAlert(title, message, isError = true) {
         const modal = document.getElementById('custom-alert-modal');
@@ -205,6 +217,59 @@
         }
     }
 
+    function handleFileSelection(event) {
+        const files = Array.from(event.target.files);
+
+        files.forEach(file => {
+            // Verifica se o arquivo já está na lista (pelo nome e tamanho para evitar duplicatas simples)
+            if (!selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                selectedFiles.push(file);
+            }
+        });
+
+        // Limpa o input para permitir selecionar o mesmo arquivo novamente se for removido
+        event.target.value = '';
+
+        updateFileListUI();
+    }
+
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        updateFileListUI();
+    }
+
+    function updateFileListUI() {
+        const fileListContainer = document.getElementById('file-list');
+        const fileCountBadge = document.getElementById('file-count-badge');
+
+        if (!fileListContainer) return;
+
+        fileListContainer.innerHTML = '';
+
+        if (selectedFiles.length > 0) {
+            fileCountBadge.textContent = selectedFiles.length;
+            fileCountBadge.classList.remove('hidden');
+
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-md text-sm';
+                fileItem.innerHTML = `
+                    <div class="flex items-center truncate mr-2">
+                        <svg class="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <span class="truncate text-gray-700">${file.name}</span>
+                        <span class="text-xs text-gray-400 ml-2">(${Math.round(file.size / 1024)} KB)</span>
+                    </div>
+                    <button type="button" onclick="removeFile(${index})" class="text-red-500 hover:text-red-700 p-1 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                `;
+                fileListContainer.appendChild(fileItem);
+            });
+        } else {
+            fileCountBadge.classList.add('hidden');
+        }
+    }
+
     async function fileToBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -215,32 +280,36 @@
     }
 
     async function uploadFiles() {
-        const fileInput = document.getElementById('groupFiles');
-        const files = fileInput.files;
-        if (files.length === 0) return null;
+        if (selectedFiles.length === 0) return null;
 
         if (!GOOGLE_SCRIPT_URL) {
             console.warn("GOOGLE_SCRIPT_URL não configurada. O upload de arquivos será ignorado.");
             return null;
         }
 
-        const uploadPromises = Array.from(files).map(async (file) => {
+        const uploadPromises = selectedFiles.map(async (file) => {
             try {
                 const base64 = await fileToBase64(file);
                 const payload = {
                     base64: base64,
-                    type: file.type,
+                    type: file.type || 'application/octet-stream',
                     name: file.name
                 };
 
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
+                    mode: 'cors', // Garantindo CORS
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8' // GAS lida melhor com text/plain para evitar preflight
+                    },
                     body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) throw new Error('Falha no upload');
 
                 const result = await response.json();
+                if (result.status === 'error') throw new Error(result.message);
+
                 return result.url;
             } catch (e) {
                 console.error(`Erro ao fazer upload do arquivo ${file.name}:`, e);
@@ -290,10 +359,14 @@
         try {
             // 1. Upload de arquivos primeiro (se houver)
             let uploadedFileUrls = null;
-            if (document.getElementById('groupFiles').files.length > 0) {
-                if (saveStatus) saveStatus.textContent = 'Enviando arquivos para o Drive...';
+            if (selectedFiles.length > 0) {
+                if (saveStatus) saveStatus.textContent = `Enviando ${selectedFiles.length} arquivo(s) para o Drive...`;
                 setLoading(true, 'Enviando arquivos...');
                 uploadedFileUrls = await uploadFiles();
+
+                if (uploadedFileUrls && uploadedFileUrls.length === 0 && selectedFiles.length > 0) {
+                    throw new Error("Falha ao enviar arquivos. Verifique a configuração do Google Script.");
+                }
             }
 
             if (saveStatus) saveStatus.textContent = 'Salvando dados do grupo...';
