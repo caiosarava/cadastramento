@@ -518,12 +518,14 @@
       const container = document.getElementById('group-view');
       let filesHtml = '';
 
-      if (group.file_urls && Array.from(group.file_urls).length > 0) {
+      const fileUrls = Array.isArray(group.file_urls) ? group.file_urls : [];
+
+      if (fileUrls.length > 0) {
         filesHtml = `
           <div class="md:col-span-2 mt-2">
             <label class="text-xs font-medium text-gray-600">Arquivos do Grupo</label>
             <div class="space-y-2 mt-1">
-              ${group.file_urls.map((url, index) => `
+              ${fileUrls.map((url, index) => `
                 <a href="${url}" target="_blank" class="flex items-center p-2 bg-white border border-green-100 rounded-md text-sm text-green-700 hover:bg-green-50 transition">
                   <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                   Arquivo ${index + 1}

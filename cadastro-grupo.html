@@ -395,7 +395,7 @@
                 headquarters_address: headquartersAddress,
                 group_segment: groupSegment,
                 user_id: user.id,
-                file_urls: uploadedFileUrls // Salva o array de URLs (certifique-se que a coluna existe no Supabase como JSONB ou Text[])
+                file_urls: Array.isArray(uploadedFileUrls) ? uploadedFileUrls : [] // Garante que seja um array
             };
 
             let groupId;
