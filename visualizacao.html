@@ -1296,8 +1296,18 @@
     document.getElementById('addMemberButton').addEventListener('click', function() {
       if (currentGroup) {
         sessionStorage.setItem('currentGroupId', currentGroup.id);
+
+        // Redireciona baseado no segmento do grupo
+        if (currentGroup.group_segment === 'Entidade de Apoio e Fomento') {
+          window.location.href = 'cadastro-entidade.html';
+        } else {
+          // Padrão ou Empreendimento Econômico Solidário
+          window.location.href = 'cadastro-membro.html';
+        }
+      } else {
+        // Fallback caso currentGroup não esteja carregado
+        window.location.href = 'cadastro-membro.html';
       }
-      window.location.href = 'cadastro-membro.html';
     });
 
     document.getElementById('editGroupButton').addEventListener('click', function() {
