@@ -335,11 +335,52 @@
               <label class="text-xs font-medium text-gray-700">Endereço da Sede</label>
               <input type="text" id="edit-group-headquarters-address" class="field-edit text-sm">
             </div>
+
+            <div>
+              <label class="text-xs font-medium text-gray-700">Qual segmento?</label>
+              <select id="edit-group-segment" class="field-edit text-sm">
+                <option value="" disabled>Selecione o segmento</option>
+                <option value="Empreendimento Econômico Solidário">Empreendimento Econômico Solidário</option>
+                <option value="Entidade de Apoio e Fomento">Entidade de Apoio e Fomento</option>
+              </select>
+            </div>
           </div>
           <div class="flex justify-end space-x-3 pt-4 border-t">
             <button onclick="cancelGroupEdit()" class="btn-cancel text-white px-6 py-2 rounded-md font-semibold">Cancelar</button>
             <button onclick="saveGroupEdit()" class="btn-save text-white px-6 py-2 rounded-md font-semibold">Salvar Alterações</button>
           </div>
+        </div>
+      </section>
+
+      <!-- SEÇÃO: DOCUMENTOS DO GRUPO (Upload e Lista) -->
+      <section id="group-documents-section" class="mb-8 p-6 bg-white rounded-lg border border-gray-200">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-gray-700 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Arquivos do Grupo
+            </h2>
+            <button id="saveOnlyFilesButton" onclick="saveOnlyFiles()" class="hidden bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 text-sm font-semibold">
+                Salvar Arquivos
+            </button>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Envie aqui seus arquivos de atas, plano de trabalho e portfolio (opcional)</label>
+
+            <div class="flex items-center gap-2 mb-3">
+                <label for="groupFiles" class="cursor-pointer bg-green-50 text-green-700 px-4 py-2 rounded-md border border-green-200 hover:bg-green-100 transition text-sm font-semibold flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Selecionar Arquivos
+                </label>
+                <input type="file" id="groupFiles" multiple accept=".pdf,.docx,.jpg,.jpeg" class="hidden">
+                <span id="file-count-badge" class="hidden bg-green-600 text-white text-xs px-2 py-1 rounded-full">0</span>
+            </div>
+
+            <div id="file-list" class="space-y-2 mb-2">
+                <!-- Lista de arquivos será inserida aqui -->
+            </div>
+
+            <p class="text-xs text-gray-500">Formatos aceitos: .pdf, .docx, .jpeg</p>
         </div>
       </section>
 
@@ -392,11 +433,19 @@
     
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
+    // URL do Web App do Google Apps Script
+    const GOOGLE_SCRIPT_URL = '';
+
     let currentGroup = null;
     let currentMembers = [];
     let memberToDelete = null;
     let editingMemberId = null;
     let isEditingGroup = false;
+
+    // Lista acumulada de arquivos para upload
+    let selectedFiles = [];
+    // Lista de URLs de arquivos já existentes
+    let existingFileUrls = [];
 
     // Funções de formatação para máscaras
     function formatCEP(value) {
@@ -439,6 +488,10 @@
     window.toggleGroupHeadquartersAddress = toggleGroupHeadquartersAddress;
     window.cancelGroupEdit = cancelGroupEdit;
     window.saveGroupEdit = saveGroupEdit;
+    window.handleFileSelection = handleFileSelection;
+    window.removeFile = removeFile;
+    window.removeExistingFile = removeExistingFile;
+    window.saveOnlyFiles = saveOnlyFiles;
     
     // Toggle Sidebar em Mobile
     const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -511,6 +564,7 @@
 
     function displayGroupInfo(group) {
       const container = document.getElementById('group-view');
+
       container.innerHTML = `
         <div>
           <label class="text-xs font-medium text-gray-600">Nome do Grupo</label>
@@ -532,6 +586,10 @@
           <label class="text-xs font-medium text-gray-600">Possui Sede Própria</label>
           <div class="field-display">${group.has_headquarters ? 'Sim' : 'Não'}</div>
         </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600">Segmento</label>
+          <div class="field-display">${group.group_segment || 'N/A'}</div>
+        </div>
         ${group.has_headquarters && group.headquarters_address ? `
         <div class="md:col-span-2">
           <label class="text-xs font-medium text-gray-600">Endereço da Sede</label>
@@ -539,16 +597,22 @@
         </div>
         ` : ''}
       `;
+
+      // Inicializar seção de documentos
+      existingFileUrls = group.file_urls && Array.isArray(group.file_urls) ? [...group.file_urls] : [];
+      updateFileListUI();
     }
 
     function toggleGroupEdit() {
       const viewDiv = document.getElementById('group-view');
       const editDiv = document.getElementById('group-edit');
+      const saveOnlyFilesButton = document.getElementById('saveOnlyFilesButton');
       const editButton = document.getElementById('editGroupButton');
       
       if (isEditingGroup) {
         viewDiv.classList.remove('hidden');
         editDiv.classList.add('hidden');
+        if (saveOnlyFilesButton) saveOnlyFilesButton.classList.add('hidden');
         editButton.innerHTML = `
           <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -559,6 +623,7 @@
       } else {
         viewDiv.classList.add('hidden');
         editDiv.classList.remove('hidden');
+        if (saveOnlyFilesButton) saveOnlyFilesButton.classList.add('hidden');
         editButton.innerHTML = `
           <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -578,6 +643,7 @@
       document.getElementById('edit-group-email').value = currentGroup.email || '';
       document.getElementById('edit-group-phone').value = currentGroup.phone || '';
       document.getElementById('edit-group-headquarters').value = currentGroup.has_headquarters ? 'true' : 'false';
+      document.getElementById('edit-group-segment').value = currentGroup.group_segment || '';
       
       if (currentGroup.has_headquarters && currentGroup.headquarters_address) {
         document.getElementById('edit-group-headquarters-address').value = currentGroup.headquarters_address;
@@ -590,6 +656,11 @@
       phoneInput.addEventListener('input', (e) => {
         e.target.value = maskPhone(e.target.value);
       });
+
+      // Carregar arquivos existentes
+      selectedFiles = [];
+      existingFileUrls = currentGroup.file_urls ? [...currentGroup.file_urls] : [];
+      updateFileListUI();
     }
 
     function toggleGroupHeadquartersAddress() {
@@ -609,16 +680,213 @@
       toggleGroupEdit();
     }
 
+    function handleFileSelection(event) {
+      const files = Array.from(event.target.files);
+
+      files.forEach(file => {
+          if (!selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+              selectedFiles.push(file);
+          }
+      });
+
+      event.target.value = '';
+      updateFileListUI();
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      updateFileListUI();
+    }
+
+    function removeExistingFile(index) {
+      existingFileUrls.splice(index, 1);
+      updateFileListUI();
+    }
+
+    function updateFileListUI() {
+      const fileListContainer = document.getElementById('file-list');
+      const fileCountBadge = document.getElementById('file-count-badge');
+      const saveOnlyFilesButton = document.getElementById('saveOnlyFilesButton');
+
+      if (!fileListContainer) return;
+
+      fileListContainer.innerHTML = '';
+
+      // Mostrar arquivos existentes
+      existingFileUrls.forEach((url, index) => {
+          const fileItem = document.createElement('div');
+          fileItem.className = 'flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-md text-sm';
+          fileItem.innerHTML = `
+              <div class="flex items-center truncate mr-2">
+                  <svg class="w-4 h-4 text-blue-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                  <span class="truncate text-blue-700 italic">Existente: Arquivo ${index + 1}</span>
+              </div>
+              <button type="button" onclick="removeExistingFile(${index})" class="text-red-500 hover:text-red-700 p-1 transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+          `;
+          fileListContainer.appendChild(fileItem);
+      });
+
+      // Mostrar novos arquivos selecionados
+      selectedFiles.forEach((file, index) => {
+          const fileItem = document.createElement('div');
+          fileItem.className = 'flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-md text-sm';
+          fileItem.innerHTML = `
+              <div class="flex items-center truncate mr-2">
+                  <svg class="w-4 h-4 text-green-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                  <span class="truncate text-green-700 font-medium">${file.name}</span>
+                  <span class="text-xs text-green-500 ml-2">(${Math.round(file.size / 1024)} KB)</span>
+              </div>
+              <button type="button" onclick="removeFile(${index})" class="text-red-500 hover:text-red-700 p-1 transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+          `;
+          fileListContainer.appendChild(fileItem);
+      });
+
+      const totalCount = selectedFiles.length + existingFileUrls.length;
+      if (totalCount > 0) {
+          fileCountBadge.textContent = totalCount;
+          fileCountBadge.classList.remove('hidden');
+      } else {
+          fileCountBadge.classList.add('hidden');
+      }
+
+      // Mostra o botão de salvar arquivos apenas se NÃO estiver editando o grupo todo
+      // E houver mudanças (novos arquivos ou arquivos removidos)
+      if (saveOnlyFilesButton && !isEditingGroup) {
+          const hasChanges = selectedFiles.length > 0 ||
+                            (currentGroup && currentGroup.file_urls && existingFileUrls.length !== currentGroup.file_urls.length);
+
+          if (hasChanges) {
+              saveOnlyFilesButton.classList.remove('hidden');
+          } else {
+              saveOnlyFilesButton.classList.add('hidden');
+          }
+      }
+    }
+
+    async function saveOnlyFiles() {
+        const saveButton = document.getElementById('saveOnlyFilesButton');
+        const originalText = saveButton.innerHTML;
+
+        try {
+            saveButton.disabled = true;
+            saveButton.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Salvando...`;
+
+            // 1. Upload de novos arquivos se houver
+            let newFileUrls = [];
+            if (selectedFiles.length > 0) {
+                newFileUrls = await uploadFiles();
+                if (newFileUrls && newFileUrls.length === 0 && selectedFiles.length > 0) {
+                    throw new Error("Falha ao enviar arquivos. Verifique a configuração do Google Script.");
+                }
+            }
+
+            const updatedData = {
+                file_urls: [...existingFileUrls, ...newFileUrls]
+            };
+
+            const { error } = await supabase
+                .from('groups')
+                .update(updatedData)
+                .eq('id', currentGroup.id);
+
+            if (error) throw error;
+
+            showAlert('Sucesso', 'Documentos atualizados com sucesso!', 'success');
+
+            // Limpa os arquivos selecionados após sucesso
+            selectedFiles = [];
+            // Recarrega os dados para atualizar o estado global e esconder o botão
+            await loadGroupData();
+        } catch (error) {
+            console.error('Erro ao atualizar arquivos:', error);
+            showAlert('Erro', `Erro ao atualizar arquivos: ${error.message}`, 'error');
+        } finally {
+            saveButton.disabled = false;
+            saveButton.innerHTML = originalText;
+        }
+    }
+
+    async function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = error => reject(error);
+      });
+    }
+
+    async function uploadFiles() {
+      if (selectedFiles.length === 0) return [];
+
+      if (!GOOGLE_SCRIPT_URL) {
+          console.warn("GOOGLE_SCRIPT_URL não configurada. O upload de arquivos será ignorado.");
+          return [];
+      }
+
+      const uploadPromises = selectedFiles.map(async (file) => {
+          try {
+              const base64 = await fileToBase64(file);
+              const payload = {
+                  base64: base64,
+                  type: file.type || 'application/octet-stream',
+                  name: file.name
+              };
+
+              const response = await fetch(GOOGLE_SCRIPT_URL, {
+                  method: 'POST',
+                  mode: 'cors',
+                  headers: {
+                      'Content-Type': 'text/plain;charset=utf-8'
+                  },
+                  body: JSON.stringify(payload)
+              });
+
+              if (!response.ok) throw new Error('Falha no upload');
+
+              const result = await response.json();
+              if (result.status === 'error') throw new Error(result.message);
+
+              return result.url;
+          } catch (e) {
+              console.error(`Erro ao fazer upload do arquivo ${file.name}:`, e);
+              return null;
+          }
+      });
+
+      const results = await Promise.all(uploadPromises);
+      return results.filter(url => url !== null);
+    }
+
     async function saveGroupEdit() {
+      const saveButton = document.querySelector('#group-edit .btn-save');
+      const originalText = saveButton.innerHTML;
+
       try {
         const groupName = document.getElementById('edit-group-name').value.trim();
         const representative = document.getElementById('edit-group-representative').value.trim();
         const email = document.getElementById('edit-group-email').value.trim();
         const phone = document.getElementById('edit-group-phone').value.trim();
+        const segment = document.getElementById('edit-group-segment').value;
         
-        if (!groupName || !representative || !email || !phone) {
+        if (!groupName || !representative || !email || !phone || !segment) {
           showAlert('Erro', 'Por favor, preencha todos os campos obrigatórios.', 'error');
           return;
+        }
+
+        saveButton.disabled = true;
+        saveButton.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-4 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Salvando...`;
+
+        // 1. Upload de novos arquivos se houver
+        let newFileUrls = [];
+        if (selectedFiles.length > 0) {
+          newFileUrls = await uploadFiles();
+          if (newFileUrls && newFileUrls.length === 0 && selectedFiles.length > 0) {
+            throw new Error("Falha ao enviar arquivos. Verifique a configuração do Google Script.");
+          }
         }
 
         const hasHeadquarters = document.getElementById('edit-group-headquarters').value === 'true';
@@ -632,7 +900,9 @@
           email: email,
           phone: phone,
           has_headquarters: hasHeadquarters,
-          headquarters_address: headquartersAddress
+          headquarters_address: headquartersAddress,
+          group_segment: segment,
+          file_urls: [...existingFileUrls, ...newFileUrls]
         };
 
         const { error } = await supabase
@@ -649,6 +919,9 @@
       } catch (error) {
         console.error('Erro ao atualizar grupo:', error);
         showAlert('Erro', `Erro ao atualizar grupo: ${error.message}`, 'error');
+      } finally {
+        saveButton.disabled = false;
+        saveButton.innerHTML = originalText;
       }
     }
 
@@ -1136,13 +1409,26 @@
     document.getElementById('addMemberButton').addEventListener('click', function() {
       if (currentGroup) {
         sessionStorage.setItem('currentGroupId', currentGroup.id);
+
+        // Redireciona baseado no segmento do grupo
+        if (currentGroup.group_segment === 'Entidade de Apoio e Fomento') {
+          window.location.href = 'cadastro-entidade.html';
+        } else {
+          // Padrão ou Empreendimento Econômico Solidário
+          window.location.href = 'cadastro-membro.html';
+        }
+      } else {
+        // Fallback caso currentGroup não esteja carregado
+        window.location.href = 'cadastro-membro.html';
       }
-      window.location.href = 'cadastro-membro.html';
     });
 
     document.getElementById('editGroupButton').addEventListener('click', function() {
       toggleGroupEdit();
     });
+
+    // Adicionar listener para o input de arquivos
+    document.getElementById('groupFiles')?.addEventListener('change', handleFileSelection);
 
     document.getElementById('backToAdmin').addEventListener('click', function() {
       sessionStorage.removeItem('adminViewGroupId');
