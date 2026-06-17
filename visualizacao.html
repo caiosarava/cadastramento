@@ -631,12 +631,6 @@
         e.target.value = maskPhone(e.target.value);
       });
 
-      // Adicionar listener para o input de arquivos
-      const fileInput = document.getElementById('groupFiles');
-      if (fileInput) {
-        fileInput.addEventListener('change', handleFileSelection);
-      }
-
       // Carregar arquivos existentes
       selectedFiles = [];
       existingFileUrls = currentGroup.file_urls ? [...currentGroup.file_urls] : [];
@@ -760,6 +754,8 @@
 
             showAlert('Sucesso', 'Documentos atualizados com sucesso!', 'success');
 
+            // Limpa os arquivos selecionados após sucesso
+            selectedFiles = [];
             // Recarrega os dados para atualizar o estado global e esconder o botão
             await loadGroupData();
         } catch (error) {
@@ -1383,6 +1379,9 @@
     document.getElementById('editGroupButton').addEventListener('click', function() {
       toggleGroupEdit();
     });
+
+    // Adicionar listener para o input de arquivos
+    document.getElementById('groupFiles')?.addEventListener('change', handleFileSelection);
 
     loadGroupData();
   </script>
