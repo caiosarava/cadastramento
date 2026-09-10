@@ -32,6 +32,7 @@
         <header class="text-center mb-8">
             <h1 class="text-3xl font-bold text-green-700">COMESOL</h1>
             <p class="text-gray-500 mt-1">Criar Nova Conta</p>
+            <p class="text-sm font-semibold text-green-700 mt-2 bg-green-50 py-1.5 px-3 rounded-md inline-block">Cadastro liberado até dia 31/10/26</p>
         </header>
 
         <div id="statusMessage" class="hidden p-3 mb-4 rounded-lg text-sm text-center" role="alert"></div>
@@ -120,8 +121,8 @@
             e.preventDefault();
 
             const now = new Date();
-            const startDate = new Date('2026-06-15T00:00:00');
-            const endDate = new Date('2026-07-16T23:59:59');
+            const startDate = new Date('2026-10-01T00:00:00');
+            const endDate = new Date('2026-10-31T23:59:59');
 
             if (now < startDate || now > endDate) {
                 displayStatus('O período de registro está encerrado.', 'bg-red-100 text-red-700', 5000);

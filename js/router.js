@@ -103,8 +103,8 @@ export async function redirectToAppropriateScreen() {
                 } else {
                     // Verifica se o perÃ­odo de ediÃ§Ã£o ainda estÃ¡ ativo
                     const now = new Date();
-                    const startDate = new Date('2026-07-01T00:00:00');
-                    const endDate = new Date('2026-07-31T23:59:59');
+                    const startDate = new Date('2026-10-01T00:00:00');
+                    const endDate = new Date('2026-10-31T23:59:59');
                     
                     if (now < startDate || now > endDate) {
                         // PerÃ­odo de ediÃ§Ã£o encerrado, vai para visualizaÃ§Ã£o sem ediÃ§Ã£o
