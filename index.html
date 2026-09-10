@@ -17,6 +17,7 @@
         <div class="mb-8">
             <h1 class="text-5xl font-bold text-green-700 mb-2">COMESOL</h1>
             <p class="text-gray-600 text-lg">Sistema de Cadastro de Grupos de Economia Solidária</p>
+            <p class="text-sm font-semibold text-green-700 mt-3 bg-green-50 py-1.5 px-4 rounded-md inline-block border border-green-200">Cadastro liberado até dia 31/10/26</p>
         </div>
         
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-green-500 mx-auto mb-4"></div>
@@ -83,8 +84,8 @@
                     } else {
                         // Verifica se o período de edição ainda está ativo
                         const now = new Date();
-                        const startDate = new Date('2026-06-15T00:00:00');
-                        const endDate = new Date('2026-07-16T23:59:59');
+                        const startDate = new Date('2026-10-01T00:00:00');
+                        const endDate = new Date('2026-10-31T23:59:59');
                         
                         if (now < startDate || now > endDate) {
                             // Período de edição encerrado, vai para visualização sem edição
