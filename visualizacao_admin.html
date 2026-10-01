@@ -1051,7 +1051,7 @@
           ${createFieldDisplay('Matérias-Primas', member.member_raw_materials)}
           ${createFieldDisplay('Renda Mensal', member.member_monthly_income)}
           ${createFieldDisplay('Envolvimento EcoSol', member.member_solidarity_involvement)}
-          ${createFieldDisplay('Outra Atividade', member.member_other_activity_toggle)}
+          ${createFieldDisplay('Outra Atividade', member.member_other_activity_toggle || 'Não')}
           ${member.member_other_activity_toggle === 'Sim' ? createFieldDisplay('Qual Atividade', member.member_other_activity) : ''}
         </div>
         
@@ -1196,7 +1196,7 @@
             <label class="text-xs font-medium text-gray-700">Outra Atividade</label>
             <select id="edit-other-toggle-${member.id}" class="field-edit text-sm">
               <option value="Sim" ${member.member_other_activity_toggle === 'Sim' ? 'selected' : ''}>Sim</option>
-              <option value="Não" ${member.member_other_activity_toggle === 'Não' ? 'selected' : ''}>Não</option>
+              <option value="Não" ${(!member.member_other_activity_toggle || member.member_other_activity_toggle === 'Não') ? 'selected' : ''}>Não</option>
             </select>
           </div>
           <div class="md:col-span-2">
@@ -1288,8 +1288,10 @@
           member_raw_materials: document.getElementById(`edit-materials-${memberId}`).value.trim(),
           member_monthly_income: document.getElementById(`edit-income-${memberId}`).value,
           member_solidarity_involvement: document.getElementById(`edit-involvement-${memberId}`).value.trim(),
-          member_other_activity_toggle: document.getElementById(`edit-other-toggle-${memberId}`).value,
-          member_other_activity: document.getElementById(`edit-other-activity-${memberId}`).value.trim()
+          member_other_activity_toggle: document.getElementById(`edit-other-toggle-${memberId}`)?.value || 'Não',
+          member_other_activity: (document.getElementById(`edit-other-toggle-${memberId}`)?.value === 'Sim' && document.getElementById(`edit-other-activity-${memberId}`)?.value.trim())
+            ? document.getElementById(`edit-other-activity-${memberId}`).value.trim()
+            : 'Nenhuma'
         };
 
         const { error } = await supabase
