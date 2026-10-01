@@ -1300,7 +1300,7 @@
       try {
         const { error } = await supabase
           .from('members')
-          .delete()
+          .update({ type: 'excluido' })
           .eq('id', memberToDelete);
 
         if (error) throw error;
@@ -1350,7 +1350,7 @@
 
         if (membersError) throw membersError;
 
-        currentMembers = members || [];
+        currentMembers = (members || []).filter(m => m.type !== 'excluido');
         displayMembers(currentMembers);
 
       } catch (error) {
