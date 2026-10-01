@@ -308,8 +308,9 @@
         }
 
         function getFilteredMembers() {
-            if (!selectedGroupId) return allMembers;
-            return allMembers.filter((m) => m.group_id === selectedGroupId);
+            const activeMembers = allMembers.filter((m) => m.type !== 'excluido');
+            if (!selectedGroupId) return activeMembers;
+            return activeMembers.filter((m) => m.group_id === selectedGroupId);
         }
 
         async function applyGroupFilter(groupId) {
@@ -436,8 +437,9 @@
         function displayGroupsTable() {
             const tbody = document.getElementById('groupsTableBody');
             const groupsToShow = selectedGroupId ? allGroups.filter((g) => g.id === selectedGroupId) : allGroups;
+            const activeMembers = allMembers.filter((m) => m.type !== 'excluido');
             const rows = groupsToShow.map((group) => {
-                const memberCount = allMembers.filter((m) => m.group_id === group.id).length;
+                const memberCount = activeMembers.filter((m) => m.group_id === group.id).length;
                 return '<tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">' + (group.group_name || '') + '</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (group.representative || '') + '</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (group.email || '') + '</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + (group.phone || '') + '</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">' + memberCount + '</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 no-print"><button onclick="viewGroupDetails(\'' + group.id + '\')" class="text-blue-600 hover:text-blue-900 font-medium">Ver Detalhes</button></td></tr>';
             }).join('');
             tbody.innerHTML = rows || '<tr><td colspan="6" class="text-center py-4 text-gray-500">Nenhum grupo cadastrado</td></tr>';
@@ -449,14 +451,15 @@
         };
 
         window.exportToCSV = function() {
-            let csv = 'Grupo,Representante,Email,Telefone,Sede Própria,Membro,CPF,Email Membro,Telefone Membro,Data Nascimento,Gênero,Etnia,Escolaridade,Renda Mensal,Função,Produtos/Serviços,Matérias-Primas\n';
+            let csv = 'Grupo,Representante,Email,Telefone,Sede Própria,Membro,CPF,Email Membro,Telefone Membro,Data Nascimento,Gênero,Etnia,Escolaridade,Renda Mensal,Função,Produtos/Serviços,Matérias-Primas,Excluído\n';
             allGroups.forEach((group) => {
                 const members = allMembers.filter((m) => m.group_id === group.id);
                 if (members.length === 0) {
-                    csv += '"' + group.group_name + '","' + group.representative + '","' + group.email + '","' + group.phone + '","' + (group.has_headquarters ? 'Sim' : 'Não') + '","","","","","","","","","","","",""\n';
+                    csv += '"' + group.group_name + '","' + group.representative + '","' + group.email + '","' + group.phone + '","' + (group.has_headquarters ? 'Sim' : 'Não') + '","","","","","","","","","","","","",""\n';
                 } else {
                     members.forEach((member) => {
-                        csv += '"' + group.group_name + '","' + group.representative + '","' + group.email + '","' + group.phone + '","' + (group.has_headquarters ? 'Sim' : 'Não') + '","' + (member.member_name || '') + '","' + (member.member_cpf || '') + '","' + (member.member_email || '') + '","' + (member.member_phone || '') + '","' + (member.member_birth_date || '') + '","' + (member.member_gender || '') + '","' + (member.member_ethnicity || '') + '","' + (member.member_education || '') + '","' + (member.member_monthly_income || '') + '","' + (member.member_role || '') + '","' + (member.member_products || '') + '","' + (member.member_raw_materials || '') + '"\n';
+                        const statusExcluido = member.type === 'excluido' ? 'excluido' : 'ativo';
+                        csv += '"' + group.group_name + '","' + group.representative + '","' + group.email + '","' + group.phone + '","' + (group.has_headquarters ? 'Sim' : 'Não') + '","' + (member.member_name || '') + '","' + (member.member_cpf || '') + '","' + (member.member_email || '') + '","' + (member.member_phone || '') + '","' + (member.member_birth_date || '') + '","' + (member.member_gender || '') + '","' + (member.member_ethnicity || '') + '","' + (member.member_education || '') + '","' + (member.member_monthly_income || '') + '","' + (member.member_role || '') + '","' + (member.member_products || '') + '","' + (member.member_raw_materials || '') + '","' + statusExcluido + '"\n';
                     });
                 }
             });

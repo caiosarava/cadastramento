@@ -514,7 +514,7 @@
 
         if (membersError) throw membersError;
 
-        currentMembers = members || [];
+        currentMembers = (members || []).filter(m => m.type !== 'excluido');
         displayMembers(currentMembers);
 
       } catch (error) {
